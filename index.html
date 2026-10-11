@@ -1,0 +1,814 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Whisky Ratings Finder</title>
+<meta name="description" content="Search Scotch, Japanese and Australian whisky ratings by name or bottle photo, and keep your own tasting log.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Whisky Finder">
+<meta name="theme-color" content="#eef0ec" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#131714" media="(prefers-color-scheme: dark)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one column under a sticky tab bar; source cards in an auto-fill grid; drawers slide in from the right. */
+:root{
+  color-scheme:light;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#eef0ec; --surface:#fbfbf8; --surface-2:#e4e8e2; --line:#d3d9d1;
+  --ink:#1c2420; --ink-2:#46514b; --ink-3:#6a756e;
+  --amber:#a3560a; --amber-ink:#ffffff; --amber-soft:#f5e5d0;
+  --peat:#3c5a41; --peat-soft:#dbe7dc;
+  --jp:#a22a3c; --jp-soft:#f6dfe2;
+  --au:#2c5a8a; --au-soft:#dde7f3;
+  --danger:#b42318;
+  --shadow:0 1px 2px rgba(28,36,32,.07);
+  --display:"Young Serif",Georgia,"Times New Roman",serif;
+  --sans:"Instrument Sans","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#131714; --surface:#1b201c; --surface-2:#232a25; --line:#2f3831;
+    --ink:#eef1ec; --ink-2:#bcc5bd; --ink-3:#919c93;
+    --amber:#e7a557; --amber-ink:#1a1206; --amber-soft:#3a2a15;
+    --peat:#9cc39f; --peat-soft:#203126;
+    --jp:#f0909e; --jp-soft:#3a1d23;
+    --au:#93bbe8; --au-soft:#1c2b3d;
+    --danger:#ff8a80; --shadow:none;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#131714; --surface:#1b201c; --surface-2:#232a25; --line:#2f3831;
+  --ink:#eef1ec; --ink-2:#bcc5bd; --ink-3:#919c93;
+  --amber:#e7a557; --amber-ink:#1a1206; --amber-soft:#3a2a15;
+  --peat:#9cc39f; --peat-soft:#203126;
+  --jp:#f0909e; --jp-soft:#3a1d23;
+  --au:#93bbe8; --au-soft:#1c2b3d;
+  --danger:#ff8a80; --shadow:none;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5}
+[hidden]{display:none!important}
+img{max-width:100%}
+h1,h2,h3{margin:0;font-weight:400;text-wrap:balance}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--amber);outline-offset:2px;border-radius:4px}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:clamp(16px,3vw,36px)}
+
+/* header + tabs */
+header{padding-block:22px 6px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+h1{font-family:var(--display);font-size:clamp(30px,4.4vw,46px);line-height:1.05;letter-spacing:-.01em;margin-top:4px}
+.lede{color:var(--ink-2);max-width:66ch;margin:8px 0 0}
+.offline{color:var(--amber);font-weight:600}
+.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:color-mix(in srgb,var(--bg) 93%,transparent);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.tabs .wrap{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+.tab{border:0;background:none;padding:12px 14px 10px;font-weight:600;color:var(--ink-3);border-bottom:2.5px solid transparent;cursor:pointer;white-space:nowrap;font-size:15px}
+.tab[aria-selected=true]{color:var(--ink);border-bottom-color:var(--amber)}
+.tab span{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--ink-3);margin-left:4px}
+main{padding-block:20px 56px}
+
+/* controls */
+.btn{height:44px;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:0 16px;cursor:pointer;font-weight:600;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none}
+.btn:hover{border-color:var(--ink-3)}
+.btn.primary{background:var(--amber);color:var(--amber-ink);border-color:var(--amber)}
+.btn.small{height:34px;font-size:13.5px;padding:0 12px;border-radius:8px}
+.btn.danger{color:var(--danger)}
+.btn:disabled{opacity:.5;cursor:default}
+.btn svg{width:18px;height:18px;flex:none}
+label.f{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600;color:var(--ink-3);letter-spacing:.05em;text-transform:uppercase;min-width:0}
+input[type=text],input[type=search],input[type=number],input[type=date],select,textarea{height:44px;border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:0 12px;font-size:15px;text-transform:none;letter-spacing:0;font-weight:400;color:var(--ink);width:100%;min-width:0}
+textarea{height:auto;min-height:72px;padding:10px 12px;resize:vertical;line-height:1.45}
+@media (max-width:760px){input[type=text],input[type=search],input[type=number],input[type=date],select,textarea{font-size:16px}}
+.hint{font-size:13px;color:var(--ink-3);font-weight:400;text-transform:none;letter-spacing:0}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;font-size:13.5px;cursor:pointer;color:var(--ink-2)}
+.chip[aria-pressed=true]{border-color:var(--amber);background:var(--amber-soft);color:var(--ink);font-weight:600}
+.cty{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.04em;border-radius:5px;padding:1px 6px;white-space:nowrap}
+.cty.SC{background:var(--peat-soft);color:var(--peat)}
+.cty.JP{background:var(--jp-soft);color:var(--jp)}
+.cty.AU{background:var(--au-soft);color:var(--au)}
+
+/* find: search panel */
+.finder{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--shadow);display:grid;gap:12px}
+.srow{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;gap:8px;align-items:end}
+@media (max-width:760px){.srow{grid-template-columns:1fr 1fr}.srow .main{grid-column:1/-1}.srow .btn{width:100%}.srow #openAll{grid-column:1/-1}}
+.main input{height:52px;font-size:18px;border:1.5px solid var(--amber)}
+.match{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:14px;color:var(--ink-2)}
+.match b{color:var(--ink);font-weight:600}
+.mine-note{font-size:14px;background:var(--amber-soft);border-radius:8px;padding:8px 12px}
+.mine-note button{border:0;background:none;color:var(--amber);font-weight:600;cursor:pointer;padding:0}
+
+/* photo reader */
+.photo{display:grid;grid-template-columns:120px minmax(0,1fr);gap:14px;border-top:1px solid var(--line);padding-top:14px}
+@media (max-width:520px){.photo{grid-template-columns:84px minmax(0,1fr)}}
+.photo img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:10px;background:var(--surface-2)}
+.photo .body{display:grid;gap:8px;min-width:0;align-content:start}
+.photo h3{font-family:var(--display);font-size:19px}
+.prog{height:6px;border-radius:99px;background:var(--surface-2);overflow:hidden}
+.prog i{display:block;height:100%;width:0;background:var(--amber);transition:width .2s}
+.cands{display:flex;flex-wrap:wrap;gap:6px}
+.cand{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 10px;cursor:pointer;text-align:left;font-size:14px;display:flex;gap:8px;align-items:center}
+.cand.best{border-color:var(--amber);background:var(--amber-soft)}
+.cand small{font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+details.raw summary{cursor:pointer;font-size:13px;color:var(--ink-3)}
+details.raw textarea{margin-top:6px;font-family:var(--mono);font-size:12.5px}
+.photo-actions{display:flex;flex-wrap:wrap;gap:8px}
+
+/* sources */
+.filters{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin:22px 0 6px}
+.filters .lbl{font-size:12px;font-weight:600;color:var(--ink-3);letter-spacing:.05em;text-transform:uppercase}
+section.cat{margin-top:26px}
+.cat-h{display:flex;justify-content:space-between;align-items:baseline;gap:6px 16px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:12px}
+.cat-h h2{font-family:var(--display);font-size:24px}
+.cat-h p{margin:0;color:var(--ink-3);font-size:13.5px;max-width:70ch}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,250px),1fr));gap:10px}
+a.src{display:flex;flex-direction:column;gap:5px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;text-decoration:none;box-shadow:var(--shadow);min-width:0}
+a.src:hover{border-color:var(--amber)}
+a.src .n{font-weight:600;font-size:15px;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+a.src .n::after{content:"↗";color:var(--ink-3);font-weight:400}
+a.src .d{font-size:13px;color:var(--ink-2)}
+a.src .meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:auto}
+.scale{font-family:var(--mono);font-size:11.5px;color:var(--ink-2);background:var(--surface-2);border-radius:5px;padding:1px 6px}
+.how{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;border-radius:5px;padding:1px 6px}
+.how.direct{background:var(--amber-soft);color:var(--amber)}
+.how.web{background:var(--surface-2);color:var(--ink-3)}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:13px;color:var(--ink-3);margin-top:8px}
+
+/* tastings */
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:620px){.stats{grid-template-columns:1fr 1fr}.stats .top{grid-column:1/-1}}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;min-width:0}
+.stat .k{font-size:12px;font-weight:600;color:var(--ink-3);letter-spacing:.05em;text-transform:uppercase}
+.stat .v{font-family:var(--display);font-size:30px;line-height:1.15;font-variant-numeric:tabular-nums}
+.stat .v small{font-family:var(--sans);font-size:14px;color:var(--ink-3)}
+.stat .t{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.toolbar{display:grid;grid-template-columns:minmax(0,1fr) 150px 170px auto;gap:8px;margin:18px 0 12px;align-items:end}
+@media (max-width:760px){.toolbar{grid-template-columns:1fr 1fr}.toolbar .q{grid-column:1/-1}.toolbar .btn{grid-column:1/-1}}
+.tlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,330px),1fr));gap:10px}
+.tcard{display:grid;grid-template-columns:74px minmax(0,1fr) auto;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;box-shadow:var(--shadow);min-width:0}
+.thumb{width:74px;height:96px;border-radius:8px;background:var(--surface-2);object-fit:cover;display:grid;place-items:center;color:var(--ink-3)}
+.thumb svg{width:28px;height:28px}
+.tcard .nm{font-weight:600;font-size:15.5px;line-height:1.3;overflow-wrap:anywhere}
+.tcard .sub{font-size:13px;color:var(--ink-3);display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;margin-top:2px}
+.tcard .note{font-size:13.5px;color:var(--ink-2);margin-top:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tcard .acts{display:flex;gap:12px;margin-top:8px}
+.linkbtn{border:0;background:none;padding:0;color:var(--amber);font-weight:600;font-size:13.5px;cursor:pointer}
+.linkbtn:hover{text-decoration:underline}
+.score{display:grid;justify-items:center;align-content:start;gap:2px;min-width:56px}
+.score b{font-family:var(--mono);font-size:22px;font-weight:500;line-height:1;font-variant-numeric:tabular-nums}
+.score span{font-size:10.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-3);text-align:center}
+.score.b5 b{color:var(--amber)}
+.empty{background:var(--surface);border:1px dashed var(--line);border-radius:12px;padding:26px;text-align:center;color:var(--ink-2);display:grid;gap:10px;justify-items:center}
+.empty h3{font-family:var(--display);font-size:21px;color:var(--ink)}
+.backup{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin-top:22px;padding-top:14px;border-top:1px solid var(--line);font-size:13.5px;color:var(--ink-3)}
+
+/* scales */
+.scales-intro{max-width:70ch;color:var(--ink-2);margin:0 0 16px}
+.tbl{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3);padding:10px 14px;background:var(--surface-2);white-space:nowrap}
+td{padding:10px 14px;border-top:1px solid var(--line);vertical-align:top}
+td.sys{font-weight:600;min-width:170px}
+td.sc{font-family:var(--mono);font-size:13px;white-space:nowrap}
+td.rd{min-width:260px;color:var(--ink-2)}
+.bands{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:8px;margin-top:10px}
+.band{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.band b{font-family:var(--mono);font-weight:500}
+.band span{display:block;font-size:13.5px;color:var(--ink-2)}
+h2.sec{font-family:var(--display);font-size:24px;margin:30px 0 4px}
+
+/* drawers */
+.back{position:fixed;inset:0;background:color-mix(in srgb,var(--ink) 40%,transparent);z-index:50}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(560px,100%);background:var(--surface);border-left:1px solid var(--line);z-index:51;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-shadow:-10px 0 30px rgba(28,36,32,.15)}
+.dh{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:16px 20px 12px;border-bottom:1px solid var(--line)}
+.dh h2{font-family:var(--display);font-size:25px;line-height:1.15}
+.x{width:38px;height:38px;flex:none;border-radius:8px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-size:20px;line-height:1;color:var(--ink-2)}
+.db{overflow:auto;flex:1;min-height:0;padding:16px 20px 24px;display:grid;gap:14px;align-content:start}
+.df{border-top:1px solid var(--line);padding:12px 20px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.df .sp{flex:1}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:480px){.g3{grid-template-columns:1fr 1fr}}
+.ephoto{display:flex;gap:12px;align-items:center}
+.ephoto .thumb{width:84px;height:110px}
+.slider{display:grid;grid-template-columns:minmax(0,1fr) 84px;gap:12px;align-items:center}
+input[type=range]{width:100%;accent-color:var(--amber);height:28px}
+.bandlbl{font-size:13.5px;color:var(--amber);font-weight:600;text-transform:none;letter-spacing:0}
+.confirm{font-size:14px;color:var(--danger);font-weight:600}
+.sa-scope{display:flex;flex-wrap:wrap;gap:6px}
+.sa-row{display:flex;align-items:center;gap:10px;padding:8px;margin-inline:-8px;border-radius:7px;border-bottom:1px solid var(--line)}
+.sa-row a{flex:1;min-width:0;text-decoration:none;font-weight:500;overflow-wrap:anywhere}
+.sa-row .st{flex:none;width:20px;height:20px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;font-size:11px;font-weight:700;color:transparent}
+.sa-row.done .st{background:var(--amber);border-color:var(--amber);color:var(--amber-ink)}
+.sa-row.done a{color:var(--ink-3)}
+.sa-row.next{background:var(--amber-soft)}
+.sa-note{font-size:13.5px;background:var(--amber-soft);border-radius:8px;padding:8px 11px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 15px;border-radius:9px;font-size:14px;z-index:60;max-width:calc(100% - 32px)}
+.drawer:not([hidden]) ~ .toast{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+footer{color:var(--ink-3);font-size:13px;padding-block:0 40px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="wrap">
+  <div class="eyebrow">Scotch · Japanese · Australian <span class="offline" id="offline" hidden>· Offline</span></div>
+  <h1>Whisky Ratings Finder</h1>
+  <p class="lede">Look up any bottle across critics, competitions, community scores and retailers, by name or from a photo of the label. Keep your own tasting notes alongside.</p>
+</header>
+
+<nav class="tabs" aria-label="Sections">
+  <div class="wrap" role="tablist">
+    <button class="tab" role="tab" id="tab-find" aria-controls="p-find" aria-selected="true" type="button">Find ratings</button>
+    <button class="tab" role="tab" id="tab-log" aria-controls="p-log" aria-selected="false" type="button">My tastings<span id="logCount"></span></button>
+    <button class="tab" role="tab" id="tab-scales" aria-controls="p-scales" aria-selected="false" type="button">Rating scales</button>
+  </div>
+</nav>
+
+<main class="wrap">
+  <!-- ====================== FIND ====================== -->
+  <section id="p-find" role="tabpanel" aria-labelledby="tab-find">
+    <form class="finder" id="sform" role="search" novalidate>
+      <div class="srow">
+        <label class="f main">Whisky name
+          <input id="q" type="search" list="dlist" placeholder="e.g. Lagavulin 16, Hibiki Harmony, Lark Classic Cask" autocomplete="off" enterkeyhint="search">
+        </label>
+        <button class="btn" id="photoBtn" type="button" title="Read the label from a photo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
+          Photo
+        </button>
+        <button class="btn primary" type="submit">Search</button>
+        <button class="btn" id="openAll" type="button">Open all</button>
+      </div>
+      <input type="file" id="photoFile" accept="image/*" hidden>
+      <datalist id="dlist"></datalist>
+      <div class="match" id="match" hidden></div>
+      <div class="mine-note" id="mineNote" hidden></div>
+
+      <div class="photo" id="photoPanel" hidden>
+        <img id="photoImg" alt="Your bottle photo">
+        <div class="body">
+          <h3 id="photoTitle">Reading the label…</h3>
+          <div class="prog" id="photoProg"><i></i></div>
+          <div class="hint" id="photoMsg">The first photo downloads the text reader (a few MB), so it takes a little longer than later ones.</div>
+          <div class="cands" id="cands"></div>
+          <details class="raw" id="rawBox" hidden><summary>Text read from the label</summary><textarea id="rawText" rows="4" aria-label="Text read from the label"></textarea></details>
+          <div class="photo-actions" id="photoActs" hidden>
+            <button class="btn small" id="photoRetry" type="button">Try another photo</button>
+            <button class="btn small" id="photoLog" type="button">Add to my tastings</button>
+            <button class="btn small" id="photoClose" type="button">Close</button>
+          </div>
+        </div>
+      </div>
+    </form>
+
+    <div class="filters">
+      <span class="lbl">Show sources for</span>
+      <div class="chips" id="ctyChips" role="group" aria-label="Country">
+        <button class="chip" type="button" data-cty="all" aria-pressed="true">All</button>
+        <button class="chip" type="button" data-cty="SC" aria-pressed="false">Scotch</button>
+        <button class="chip" type="button" data-cty="JP" aria-pressed="false">Japanese</button>
+        <button class="chip" type="button" data-cty="AU" aria-pressed="false">Australian</button>
+      </div>
+    </div>
+    <div class="legend">
+      <span><span class="how direct">Direct</span> opens the site's own search</span>
+      <span><span class="how web">Web</span> Google search limited to that source</span>
+      <span><span class="scale">100 pts</span> the source's rating scale (see Rating scales)</span>
+    </div>
+    <div id="cats"></div>
+  </section>
+
+  <!-- ====================== TASTINGS ====================== -->
+  <section id="p-log" role="tabpanel" aria-labelledby="tab-log" hidden>
+    <div class="stats" id="stats"></div>
+    <div class="toolbar">
+      <label class="f q">Find in my tastings<input id="lq" type="search" placeholder="Name, distillery or note" autocomplete="off"></label>
+      <label class="f">Country<select id="lcty"><option value="">All</option><option value="SC">Scotch</option><option value="JP">Japanese</option><option value="AU">Australian</option><option value="other">Other</option></select></label>
+      <label class="f">Sort<select id="lsort"><option value="date">Newest first</option><option value="score">Highest score</option><option value="name">Name A–Z</option></select></label>
+      <button class="btn primary" id="addT" type="button">+ Add tasting</button>
+    </div>
+    <div id="tlist"></div>
+    <div class="backup">
+      <span>Your tastings and photos are stored on this device only. To move them between iPhone and Mac:</span>
+      <button class="btn small" id="exportBtn" type="button">Export backup</button>
+      <button class="btn small" id="importBtn" type="button">Import backup</button>
+      <input type="file" id="importFile" accept="application/json,.json" hidden>
+    </div>
+  </section>
+
+  <!-- ====================== SCALES ====================== -->
+  <section id="p-scales" role="tabpanel" aria-labelledby="tab-scales" hidden>
+    <p class="scales-intro">Every source rates differently. A 90 from a critic who rarely goes above 92 means more than a 90 on a site where most bottles score in the high 80s, and competition medals depend on who entered. Use this table to read a score in context.</p>
+    <div class="tbl"><table>
+      <thead><tr><th>Source</th><th>Type</th><th>Scale</th><th>How to read it</th></tr></thead>
+      <tbody id="scaleRows"></tbody>
+    </table></div>
+    <h2 class="sec">How my own scores read</h2>
+    <p class="hint" style="margin:0">The bands used in My tastings, on the familiar 100-point scale.</p>
+    <div class="bands" id="bands"></div>
+  </section>
+</main>
+
+<footer class="wrap">Searches open each source in a new tab; nothing you type leaves this device otherwise. Ratings belong to their publishers and change over time, so check the source before you buy.</footer>
+
+<!-- tasting editor -->
+<div class="back" id="eBack" hidden></div>
+<form class="drawer" id="editor" role="dialog" aria-modal="true" aria-labelledby="eH" hidden novalidate>
+  <div class="dh"><div><div class="eyebrow" id="eEyebrow">New tasting</div><h2 id="eH">Add a tasting</h2></div><button class="x" type="button" id="eClose" aria-label="Close">×</button></div>
+  <div class="db">
+    <div class="ephoto">
+      <div class="thumb" id="eThumb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M10 2h4v4l1.5 2.5V20a2 2 0 0 1-2 2h-3a2 2 0 0 1-2-2V8.5L10 6z"/><path d="M8.5 13h7"/></svg></div>
+      <div style="display:grid;gap:8px">
+        <button class="btn small" type="button" id="ePhotoBtn">Add bottle photo</button>
+        <button class="btn small" type="button" id="ePhotoDel" hidden>Remove photo</button>
+        <input type="file" id="ePhotoFile" accept="image/*" hidden>
+      </div>
+    </div>
+    <label class="f">Whisky<input id="eName" type="text" list="dlist" placeholder="e.g. Talisker 10" autocomplete="off" required></label>
+    <div class="g2">
+      <label class="f">Distillery or brand<input id="eDist" type="text" list="dlist" autocomplete="off"></label>
+      <label class="f">Country<select id="eCty"><option value="SC">Scotland</option><option value="JP">Japan</option><option value="AU">Australia</option><option value="other">Other</option></select></label>
+    </div>
+    <div class="g3">
+      <label class="f">Age (years)<input id="eAge" type="number" inputmode="numeric" min="0" max="80" placeholder="NAS"></label>
+      <label class="f">ABV %<input id="eAbv" type="number" inputmode="decimal" min="20" max="80" step="0.1" placeholder="46"></label>
+      <label class="f">Region<input id="eRegion" type="text" autocomplete="off" placeholder="Islay"></label>
+    </div>
+    <label class="f">Cask / finish<input id="eCask" type="text" autocomplete="off" placeholder="e.g. Oloroso sherry, ex-bourbon, Apera"></label>
+    <div class="f">My score <span class="bandlbl" id="eBand"></span>
+      <div class="slider"><input type="range" id="eScoreR" min="50" max="100" step="1" value="85" aria-label="Score slider"><input type="number" id="eScore" min="50" max="100" value="85" inputmode="numeric" aria-label="Score out of 100"></div>
+    </div>
+    <label class="f">Nose<textarea id="eNose" rows="2"></textarea></label>
+    <label class="f">Palate<textarea id="ePalate" rows="2"></textarea></label>
+    <label class="f">Finish<textarea id="eFinish" rows="2"></textarea></label>
+    <label class="f">Notes<textarea id="eNotes" rows="2" placeholder="Overall thoughts, food pairing, would I buy it again?"></textarea></label>
+    <div class="g3">
+      <label class="f">Date<input id="eDate" type="date"></label>
+      <label class="f">Price (AUD)<input id="ePrice" type="number" inputmode="decimal" min="0" step="1"></label>
+      <label class="f">Where<input id="eWhere" type="text" autocomplete="off" placeholder="Bar, shop, friend"></label>
+    </div>
+    <span class="formerr confirm" id="eErr" role="alert"></span>
+  </div>
+  <div class="df">
+    <button class="btn primary" type="submit" id="eSave">Save</button>
+    <button class="btn" type="button" id="eCancel">Cancel</button>
+    <span class="sp"></span>
+    <span class="confirm" id="eDelQ" hidden>Delete this tasting?</span>
+    <button class="btn danger" type="button" id="eDel" hidden>Delete</button>
+  </div>
+</form>
+
+<!-- open all -->
+<div class="back" id="saBack" hidden></div>
+<div class="drawer" id="sa" role="dialog" aria-modal="true" aria-labelledby="saH" hidden>
+  <div class="dh"><div><div class="eyebrow">Open all sources</div><h2 id="saH">Check every rating</h2></div><button class="x" type="button" id="saClose" aria-label="Close">×</button></div>
+  <div class="db">
+    <div class="scale" id="saQ" style="font-size:13px;padding:6px 10px"></div>
+    <div class="sa-scope" id="saScope"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn primary" id="saAll" type="button">Open all</button>
+      <a class="btn" id="saNext" href="#" target="_blank" rel="noopener">Open next</a>
+      <button class="btn small" id="saReset" type="button">Start over</button>
+    </div>
+    <div class="hint" id="saCount"></div>
+    <div class="sa-note" id="saNote" hidden></div>
+    <div id="saList"></div>
+  </div>
+</div>
+
+<script src="distilleries.js"></script>
+<script>
+/* =====================================================================
+   RATING SOURCES
+   k: 'direct' → the site's own search;  'web' → Google search limited to
+   domains (d) and/or a phrase (p).  f: '*' all, or 'SC' | 'JP' | 'AU'.
+   ===================================================================== */
+const E = encodeURIComponent;
+const google = q => `https://www.google.com/search?q=${E(q)}`;
+const CATS = [
+ {id:'critic', name:'Critics & publications', blurb:'Published scores from writers and magazines.', items:[
+  {n:'Whisky Advocate', d:'Buying guide ratings by its tasting panel', k:'web', dm:['whiskyadvocate.com'], s:'100 pts', f:'*'},
+  {n:'Jim Murray\'s Whisky Bible', d:'Annual book; scores quoted widely online', k:'web', p:'"Whisky Bible"', s:'100 pts', f:'*'},
+  {n:'Whiskyfun', d:'Serge Valentin, Malt Maniacs; thousands of notes', k:'web', dm:['whiskyfun.com'], s:'100 pts', f:'*'},
+  {n:'Whisky Magazine', d:'Paired reviewer scores', k:'web', dm:['whiskymag.com'], s:'10 pts', f:'*'},
+  {n:'WhiskyNotes', d:'Ruben Luyten, independent bottlings', k:'web', dm:['whiskynotes.be'], s:'100 pts', f:'*'},
+  {n:'Wine-Searcher', d:'Collected critic scores, plus prices', k:'direct', u:q => `https://www.wine-searcher.com/find/${q.trim().split(/\s+/).map(E).join('+')}`, s:'Avg. of critics', f:'*'},
+  {n:'Ralfy', d:'Long-running YouTube reviews with a mark out of 100', k:'direct', u:q => `https://www.youtube.com/results?search_query=${E('ralfy ' + q)}`, s:'100 pts', f:'*'},
+  {n:'Nonjatta', d:'Japanese whisky news and reviews', k:'web', dm:['nonjatta.com'], s:'Notes', f:'JP'},
+  {n:'Campbell Mattinson', d:'Australian whisky reviews and profiles', k:'web', dm:['campbellmattinson.com'], s:'100 pts', f:'AU'},
+  {n:'Whisky & Wisdom', d:'Australian whisky writing and awards coverage', k:'web', dm:['whiskyandwisdom.com'], s:'Notes', f:'AU'}
+ ]},
+ {id:'comp', name:'Competitions & awards', blurb:'Blind-judged medals and trophies. Searches find results pages and announcements.', items:[
+  {n:'World Whiskies Awards', d:'Whisky Magazine; World\'s Best and country winners', k:'web', dm:['worldwhiskiesawards.com'], s:'Category winners', f:'*'},
+  {n:'IWSC', d:'International Wine & Spirit Competition', k:'web', dm:['iwsc.net'], s:'100 pts + medal', f:'*'},
+  {n:'International Spirits Challenge', d:'ISC medals and trophies', k:'web', dm:['internationalspiritschallenge.com'], s:'Medals', f:'*'},
+  {n:'San Francisco World Spirits Competition', d:'Double Gold, Gold, Silver, Bronze', k:'web', dm:['thetastingalliance.com','sfspiritscomp.com'], s:'Medals', f:'*'},
+  {n:'Ultimate Spirits Challenge', d:'Scored by panel, Chairman\'s Trophy', k:'web', dm:['ultimate-beverage.com'], s:'100 pts', f:'*'},
+  {n:'Global Spirits Masters', d:'The Spirits Business: Scotch, Japanese, World Whisky Masters', k:'web', dm:['thespiritsbusiness.com'], p:'Masters', s:'Medals', f:'*'},
+  {n:'Spirits Selection (Concours Mondial)', d:'Concours Mondial de Bruxelles', k:'web', dm:['spiritsselection.com'], s:'Medals', f:'*'},
+  {n:'Tokyo Whisky & Spirits Competition', d:'TWSC, Japan Whisky Research Centre', k:'web', dm:['tokyowhiskyspiritscompetition.jp'], s:'Medals', f:'JP'},
+  {n:'Australian International Spirits Awards', d:'Melbourne Royal; Australian and imported spirits', k:'web', dm:['melbourneroyal.com.au'], s:'Medals + trophies', f:'AU'},
+  {n:'Royal Australian Spirit Awards', d:'Adelaide', k:'web', p:'"Royal Australian Spirit Awards"', s:'Medals', f:'AU'},
+  {n:'Tasting Australia Spirit Awards', d:'Part of the Tasting Australia festival', k:'web', p:'"Tasting Australia" spirit awards', s:'Medals', f:'AU'},
+  {n:'Australian Whisky Awards', d:'Australian-only whisky judging', k:'web', p:'"Australian Whisky Awards"', s:'Medals', f:'AU'}
+ ]},
+ {id:'comm', name:'Community ratings', blurb:'Averages from drinkers. Look at the number of ratings as well as the score.', items:[
+  {n:'Whiskybase', d:'Largest whisky database; average of member votes', k:'direct', u:q => `https://www.whiskybase.com/search?q=${E(q)}`, s:'100 pts avg', f:'*'},
+  {n:'Distiller', d:'Editorial score plus user star ratings', k:'direct', u:q => `https://distiller.com/search?term=${E(q)}`, s:'100 pts + 5★', f:'*'},
+  {n:'Reddit reviews', d:'r/Scotch, r/worldwhisky, r/whisky and more', k:'direct', u:q => `https://www.reddit.com/search/?q=${E(q + ' review')}`, s:'Mostly 100 pts', f:'*'},
+  {n:'YouTube reviews', d:'Video tastings from many reviewers', k:'direct', u:q => `https://www.youtube.com/results?search_query=${E(q + ' review')}`, s:'Varies', f:'*'}
+ ]},
+ {id:'shop', name:'Retailers & prices', blurb:'Customer reviews, tasting notes and what the bottle costs now.', items:[
+  {n:'Dan Murphy\'s', d:'Australian prices and customer ratings', k:'direct', u:q => `https://www.danmurphys.com.au/search?searchTerm=${E(q)}`, s:'5★', f:'*'},
+  {n:'Nicks Wine Merchants', d:'Melbourne specialist; wide whisky range', k:'web', dm:['nicks.com.au'], s:'Notes', f:'*'},
+  {n:'The Whisky Exchange', d:'UK retailer; customer reviews', k:'direct', u:q => `https://www.thewhiskyexchange.com/search?q=${E(q)}`, s:'5★', f:'*'},
+  {n:'Master of Malt', d:'UK retailer; reviews and tasting notes', k:'web', dm:['masterofmalt.com'], s:'5★', f:'*'},
+  {n:'Dekanta', d:'Japanese whisky specialist', k:'web', dm:['dekanta.com'], s:'Notes', f:'JP'},
+  {n:'Whisky Auctioneer', d:'Auction results for rare and older bottles', k:'web', dm:['whiskyauctioneer.com'], s:'Prices', f:'*'}
+ ]}
+];
+const SCALES = [
+  ['Whisky Advocate','Critic','100 pts','95–100 classic, 90–94 outstanding, 80–89 very good to excellent, 70–79 above average to good. Scores above 90 are a strong recommendation.'],
+  ['Jim Murray\'s Whisky Bible','Critic (book)','100 pts','Nose, taste, finish and balance are each marked out of 25. Scores of about 94 and above earn his Liquid Gold award. One person\'s palate, so compare like with like.'],
+  ['Whiskyfun','Critic','100 pts','Most whiskies land between 80 and 90. Low 90s is very good; the high 90s are reserved for rare old bottlings.'],
+  ['Whisky Magazine','Critic','10 pts','Two reviewers each give a mark out of 10. Read the two scores together; 8 and above is a good result.'],
+  ['Ralfy','Critic (video)','100 pts','"Ralfy\'s mark" sits mostly in the 80s; 90+ is rare and a strong endorsement, especially for value.'],
+  ['Wine-Searcher','Aggregator','Avg. of critics','An average of published critic scores, with the number of critics shown. One critic can move it a lot.'],
+  ['IWSC','Competition','100 pts + medal','Gold Outstanding 98–100, Gold 95–97, Silver 90–94, Bronze 85–89, judged blind.'],
+  ['San Francisco WSC','Competition','Medals','Double Gold means every judge on the panel awarded Gold. Gold, Silver and Bronze follow. Medals are common, so Double Gold is the one to look for.'],
+  ['World Whiskies Awards','Competition','Category winners','Entries are tasted in rounds; winners are named by style and country (for example Australia\'s or Japan\'s Best Single Malt), then a World\'s Best overall.'],
+  ['TWSC','Competition','Medals','Bronze, Silver, Gold and Superior Gold from the average of at least eight blind judges; Best of the Best is the top whisky overall.'],
+  ['Australian International Spirits Awards','Competition','Medals + trophies','Medals for each entry plus trophies such as best Australian whisky. Only entered bottles are judged.'],
+  ['Whiskybase','Community','100 pts avg','Average of member votes. Trust it more when there are many votes; most bottles average 80–88, so 89+ stands out.'],
+  ['Distiller','Community','100 pts + 5★','A Distiller score from its editors plus average user stars out of 5.'],
+  ['Retailers','Customer reviews','5★','Useful for whether buyers were happy, less for fine comparisons. Few reviews means little.'],
+  ['Competitions in general','Note','—','Only bottles that were entered can win. A medal says the whisky is well made; the absence of one says nothing.']
+];
+const BANDS = [[95,'Exceptional','One of the best I have had'],[90,'Outstanding','Would buy again happily'],[85,'Very good','Recommend it'],[80,'Good','Enjoyable, nothing special'],[70,'Decent','Fine, would not seek out'],[0,'Not for me','Would not drink again']];
+const bandOf = s => BANDS.find(b => s >= b[0]) || BANDS[BANDS.length - 1];
+const CTYNAME = {SC:'Scotland', JP:'Japan', AU:'Australia', other:'Other'};
+
+/* ---------- helpers ---------- */
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const store = {get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;}}, set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}};
+let tt; function toast(m){ let t = document.querySelector('.toast'); if (!t){ t = document.createElement('div'); t.className = 'toast'; t.setAttribute('role','status'); document.body.appendChild(t); } t.textContent = m; t.hidden = false; clearTimeout(tt); tt = setTimeout(() => t.hidden = true, 2800); }
+function hrefOf(s, q){
+  if (s.k === 'direct') return s.u(q);
+  const dom = s.dm ? '(' + s.dm.map(d => 'site:' + d).join(' OR ') + ') ' : '';
+  return google(dom + q + (s.p ? ' ' + s.p : ''));
+}
+function homeOf(s){
+  if (s.dm) return 'https://' + s.dm[0];
+  if (s.k === 'direct'){ try { return new URL(s.u('x')).origin; } catch(e){} }
+  return google(s.n);
+}
+
+/* ---------- distillery matching (names, aliases, label text) ---------- */
+const norm = s => String(s || '').normalize('NFKD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/[’']/g, '').replace(/&/g, ' AND ').replace(/[^A-Z0-9぀-ヿ一-鿿]+/g, ' ').trim();
+const DIST = (window.DISTILLERIES || []).map(([name, cty, region, ...al]) => ({name, cty, region, keys:[name, ...al].map(norm).filter(Boolean)}));
+function lev(a, b){
+  if (a === b) return 0; const m = a.length, n = b.length; if (!m || !n) return m || n;
+  let prev = Array.from({length:n + 1}, (_, j) => j);
+  for (let i = 1; i <= m; i++){ const cur = [i]; for (let j = 1; j <= n; j++) cur[j] = Math.min(prev[j] + 1, cur[j-1] + 1, prev[j-1] + (a[i-1] === b[j-1] ? 0 : 1)); prev = cur; }
+  return prev[n];
+}
+/* Score every distillery against a block of text: exact phrase hits first, then close spellings (OCR slips). */
+function findDistilleries(text, limit = 4){
+  const t = ' ' + norm(text) + ' ', toks = t.trim().split(' ').filter(Boolean);
+  const out = [];
+  DIST.forEach(d => {
+    let best = 0, how = '';
+    d.keys.forEach(k => {
+      const cjk = /[぀-ヿ一-鿿]/.test(k);
+      if ((cjk && t.includes(k)) || t.includes(' ' + k + ' ')){ const sc = 1 + Math.min(k.length, 14) / 14; if (sc > best){ best = sc; how = 'exact'; } return; }
+      if (cjk || k.length < 5) return;
+      const ks = k.replace(/ /g, '');
+      if (ks.length >= 6 && t.replace(/ /g, '').includes(ks)){ const sc = .95 + Math.min(ks.length, 14) / 14; if (sc > best){ best = sc; how = 'exact'; } return; }
+      const words = k.split(' ').length;
+      for (let i = 0; i + words <= toks.length; i++){
+        const cand = toks.slice(i, i + words).join(' ');
+        if (Math.abs(cand.length - k.length) > 2) continue;
+        const r = 1 - lev(cand, k) / Math.max(cand.length, k.length);
+        if (r >= 0.78 && r > best){ best = r; how = 'close'; }
+      }
+    });
+    if (best) out.push({d, score:best, how});
+  });
+  return out.sort((a, b) => b.score - a.score).slice(0, limit);
+}
+const EXPR = ['CASK STRENGTH','DOUBLE WOOD','QUARTER CASK','DISTILLERS EDITION','SINGLE CASK','SMALL BATCH','PEATED','SHERRY','OLOROSO','PEDRO XIMENEZ','PX','PORT','MADEIRA','RUM CASK','BOURBON CASK','APERA','MIZUNARA','HARMONY','CLASSIC CASK','HEAVILY PEATED','TRIPLE CASK','12 YEAR','FOUNDERS RESERVE','UIGEADAIL','CORRYVRECKAN','A BUNADH','NOVA','SOLERA','DOUBLE MATURED'];
+function ageOf(text){
+  const t = norm(text);
+  let m = t.match(/\b(\d{1,2})\s*(?:YEARS?|YRS?|YO|Y O|ANS|JAHRE|AÑOS)\b/) || t.match(/\bAGED\s*(\d{1,2})\b/) || String(text).match(/(\d{1,2})\s*年/);
+  const n = m ? +m[1] : 0; return n >= 3 && n <= 60 ? n : 0;
+}
+function abvOf(text){ const m = String(text).replace(/,/g, '.').match(/(\d{2}(?:\.\d)?)\s*%\s*(?:ALC|VOL|ABV)?/i); const v = m ? +m[1] : 0; return v >= 38 && v <= 75 ? v : 0; }
+function suggestName(text, d){
+  const t = ' ' + norm(text) + ' ', age = ageOf(text);
+  const extra = EXPR.filter(x => t.includes(' ' + x + ' ') && !d.keys.includes(x)).slice(0, 2).map(x => x.toLowerCase().replace(/\b\w/g, c => c.toUpperCase()));
+  return [d.name.replace(/^The /, ''), age ? String(age) : '', ...extra].filter(Boolean).join(' ').replace(/\s+/g, ' ');
+}
+function distilleryFor(name){ const r = findDistilleries(name, 1)[0]; return r && r.how === 'exact' ? r.d : null; }
+
+/* ---------- FIND: render sources ---------- */
+let cty = store.get('wf-cty', 'all');
+function query(){ return $('q').value.trim(); }
+function visibleCats(){
+  return CATS.map(c => ({...c, items:c.items.filter(s => cty === 'all' || s.f === '*' || s.f === cty)})).filter(c => c.items.length);
+}
+function renderFind(){
+  const q = query();
+  document.querySelectorAll('#ctyChips .chip').forEach(b => b.setAttribute('aria-pressed', b.dataset.cty === cty));
+  $('cats').innerHTML = visibleCats().map(c => `<section class="cat" id="cat-${c.id}"><div class="cat-h"><h2>${esc(c.name)}</h2><p>${esc(c.blurb)}</p></div><div class="grid">${
+    c.items.map(s => `<a class="src" href="${esc(q ? hrefOf(s, q) : homeOf(s))}" target="_blank" rel="noopener"><span class="n">${esc(s.n)}</span><span class="d">${esc(s.d)}</span><span class="meta"><span class="how ${s.k === 'direct' ? 'direct' : 'web'}">${s.k === 'direct' ? 'Direct' : 'Web'}</span><span class="scale">${esc(s.s)}</span>${s.f !== '*' ? `<span class="cty ${s.f}">${s.f === 'JP' ? 'Japan' : s.f === 'AU' ? 'Australia' : 'Scotland'}</span>` : ''}</span></a>`).join('')
+  }</div></section>`).join('');
+  const d = q ? distilleryFor(q) : null;
+  $('match').hidden = !d;
+  if (d) $('match').innerHTML = `<b>${esc(d.name)}</b><span class="cty ${d.cty}">${CTYNAME[d.cty]}</span><span>${esc(d.region)}</span>`;
+  const mine = q ? tastings.filter(t => norm(t.name) === norm(q) || (norm(t.name).includes(norm(q)) && norm(q).length > 5)) : [];
+  $('mineNote').hidden = !mine.length;
+  if (mine.length){
+    const t = mine.sort((a, b) => (b.date || '').localeCompare(a.date || ''))[0];
+    $('mineNote').innerHTML = `You scored <b>${esc(t.name)}</b> <b>${t.score}</b> (${esc(bandOf(t.score)[1].toLowerCase())})${t.date ? ' on ' + esc(fmtDate(t.date)) : ''}. <button type="button" data-edit="${esc(t.id)}">See my notes</button>`;
+  }
+}
+$('ctyChips').addEventListener('click', e => { const b = e.target.closest('[data-cty]'); if (!b) return; cty = b.dataset.cty; store.set('wf-cty', cty); renderFind(); });
+$('q').addEventListener('input', renderFind);
+$('sform').addEventListener('submit', e => {
+  e.preventDefault(); const q = query();
+  if (!q){ toast('Type a whisky name, or use Photo.'); $('q').focus(); return; }
+  remember(q); if (document.activeElement && matchMedia('(max-width:760px)').matches) document.activeElement.blur();
+  renderFind(); $('cats').scrollIntoView({behavior:'smooth', block:'start'});
+  toast('Every source below now searches for ' + q + '.');
+});
+$('mineNote').addEventListener('click', e => { const b = e.target.closest('[data-edit]'); if (b) openEditor(tastings.find(t => t.id === b.dataset.edit)); });
+function remember(q){ const r = store.get('wf-recent', []).filter(x => x !== q); r.unshift(q); store.set('wf-recent', r.slice(0, 12)); fillList(); }
+function fillList(){
+  const names = new Set([...store.get('wf-recent', []), ...tastings.map(t => t.name), ...DIST.map(d => d.name)]);
+  $('dlist').innerHTML = [...names].map(n => `<option value="${esc(n)}"></option>`).join('');
+}
+
+/* ---------- PHOTO: read the label on this device ---------- */
+const OCR_SRC = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+let ocrWorker = null, photoThumb = '', photoBusy = false;
+function loadScript(src){ return new Promise((res, rej) => { if (document.querySelector(`script[src="${src}"]`) && window.Tesseract) return res(); const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('script')); document.head.appendChild(s); }); }
+function setProg(p, msg){ $('photoProg').hidden = p == null; if (p != null) $('photoProg').firstElementChild.style.width = Math.round(p * 100) + '%'; if (msg) $('photoMsg').textContent = msg; }
+async function getWorker(){
+  if (ocrWorker) return ocrWorker;
+  await loadScript(OCR_SRC);
+  ocrWorker = await Tesseract.createWorker('eng', 1, {logger: m => {
+    if (m.status === 'recognizing text') setProg(.35 + m.progress * .6, 'Reading the label…');
+    else if (/load|initiali/i.test(m.status)) setProg(Math.min(.3, (m.progress || 0) * .3), 'Getting the text reader ready…');
+  }});
+  return ocrWorker;
+}
+async function loadImage(file){
+  try { return await createImageBitmap(file, {imageOrientation:'from-image'}); }
+  catch(e){ return await new Promise((res, rej) => { const img = new Image(); img.onload = () => res(img); img.onerror = rej; img.src = URL.createObjectURL(file); }); }
+}
+function canvasFrom(img, max, mode){
+  const w = img.width, h = img.height, k = Math.min(1, max / Math.max(w, h));
+  const c = document.createElement('canvas'); c.width = Math.round(w * k); c.height = Math.round(h * k);
+  const x = c.getContext('2d'); x.drawImage(img, 0, 0, c.width, c.height);
+  if (mode){
+    const d = x.getImageData(0, 0, c.width, c.height), a = d.data; let lo = 255, hi = 0;
+    for (let i = 0; i < a.length; i += 4){ const g = .3 * a[i] + .59 * a[i+1] + .11 * a[i+2]; a[i] = g; if (g < lo) lo = g; if (g > hi) hi = g; }
+    const span = Math.max(1, hi - lo);
+    for (let i = 0; i < a.length; i += 4){ let g = (a[i] - lo) * 255 / span; if (mode === 'invert') g = 255 - g; a[i] = a[i+1] = a[i+2] = g; }
+    x.putImageData(d, 0, 0);
+  }
+  return c;
+}
+function showCands(list, text){
+  const age = ageOf(text);
+  $('cands').innerHTML = list.map((r, i) => {
+    const nm = suggestName(text, r.d);
+    return `<button type="button" class="cand${i === 0 ? ' best' : ''}" data-name="${esc(nm)}"><span><b>${esc(nm)}</b><br><small>${esc(r.d.region)} · ${CTYNAME[r.d.cty]}${r.how === 'close' ? ' · close match' : ''}</small></span></button>`;
+  }).join('');
+  return list.length ? suggestName(text, list[0].d) : '';
+}
+async function readPhoto(file){
+  if (photoBusy) return; photoBusy = true;
+  $('photoPanel').hidden = false; $('photoActs').hidden = true; $('rawBox').hidden = true; $('cands').innerHTML = '';
+  $('photoTitle').textContent = 'Reading the label…'; setProg(.02, 'Preparing the photo…');
+  try {
+    const img = await loadImage(file);
+    const thumb = canvasFrom(img, 480); photoThumb = thumb.toDataURL('image/jpeg', .78); $('photoImg').src = photoThumb;
+    const w = await getWorker();
+    let r = await w.recognize(canvasFrom(img, 1600, 'gray'));
+    let text = r.data.text || '', found = findDistilleries(text);
+    if (!found.length){ setProg(.5, 'Trying again with light text on dark…'); r = await w.recognize(canvasFrom(img, 1600, 'invert')); text += '\n' + (r.data.text || ''); found = findDistilleries(text); }
+    $('rawText').value = text.trim(); $('rawBox').hidden = !text.trim(); setProg(null); $('photoActs').hidden = false;
+    if (found.length){
+      const best = showCands(found, text);
+      $('photoTitle').textContent = 'Found it'; $('photoMsg').textContent = 'Searching for the best match. Tap another if it picked the wrong one, or edit the name above.';
+      $('q').value = best; remember(best); renderFind();
+    } else {
+      $('photoTitle').textContent = 'Couldn\'t recognise the distillery';
+      $('photoMsg').textContent = 'Try a closer, straight-on photo of the front label in good light, or type the name. The text it did read is below.';
+    }
+  } catch(e){
+    setProg(null); $('photoActs').hidden = false; $('photoTitle').textContent = 'The photo couldn\'t be read';
+    $('photoMsg').textContent = navigator.onLine === false ? 'The text reader needs an internet connection the first time. Connect and try again.' : 'Something went wrong loading the text reader. Check your connection and try again.';
+  } finally { photoBusy = false; }
+}
+$('photoBtn').addEventListener('click', () => $('photoFile').click());
+$('photoRetry').addEventListener('click', () => $('photoFile').click());
+$('photoFile').addEventListener('change', e => { const f = e.target.files && e.target.files[0]; e.target.value = ''; if (f) readPhoto(f); });
+$('photoClose').addEventListener('click', () => { $('photoPanel').hidden = true; });
+$('cands').addEventListener('click', e => { const b = e.target.closest('[data-name]'); if (!b) return; document.querySelectorAll('.cand').forEach(c => c.classList.toggle('best', c === b)); $('q').value = b.dataset.name; remember(b.dataset.name); renderFind(); });
+$('rawText').addEventListener('input', () => { const found = findDistilleries($('rawText').value); const best = showCands(found, $('rawText').value); if (best){ $('q').value = best; renderFind(); } });
+$('photoLog').addEventListener('click', () => openEditor(null, {name:query(), photo:photoThumb, text:$('rawText').value}));
+
+/* ---------- OPEN ALL ---------- */
+let saOff = store.get('wf-sa-off', []), saDone = new Set(), saQ = '', saItems = [];
+function saBuild(){
+  const q = query(); if (q !== saQ){ saDone = new Set(); saQ = q; $('saNote').hidden = true; }
+  saItems = []; visibleCats().forEach(c => { if (saOff.includes(c.id)) return; c.items.forEach(s => saItems.push({key:c.id + '|' + s.n, n:s.n, cat:c.name, href:hrefOf(s, q)})); });
+}
+function saRender(){
+  saBuild();
+  $('saQ').textContent = query();
+  $('saScope').innerHTML = visibleCats().map(c => `<button type="button" class="chip" data-sacat="${c.id}" aria-pressed="${!saOff.includes(c.id)}">${esc(c.name)} <span class="hint">${c.items.length}</span></button>`).join('');
+  const left = saItems.filter(x => !saDone.has(x.key)), next = left[0];
+  $('saAll').textContent = left.length ? (saDone.size ? `Open remaining ${left.length}` : `Open all ${left.length}`) : 'All opened'; $('saAll').disabled = !left.length;
+  $('saNext').href = next ? next.href : '#'; $('saNext').textContent = next ? 'Open next: ' + next.n : 'Open next'; $('saNext').setAttribute('aria-disabled', !next);
+  $('saCount').textContent = `${saItems.length - left.length} of ${saItems.length} opened`;
+  let html = '', cur = '';
+  saItems.forEach(x => { if (x.cat !== cur){ cur = x.cat; html += `<div class="eyebrow" style="margin:14px 0 4px">${esc(cur)}</div>`; }
+    html += `<div class="sa-row${saDone.has(x.key) ? ' done' : (next && next.key === x.key ? ' next' : '')}"><span class="st" aria-hidden="true">✓</span><a href="${esc(x.href)}" target="_blank" rel="noopener" data-sakey="${esc(x.key)}">${esc(x.n)}</a></div>`; });
+  $('saList').innerHTML = html;
+}
+function openDrawer(id, back){ $(id).hidden = false; $(back).hidden = false; document.body.style.overflow = 'hidden'; }
+function closeDrawer(id, back){ $(id).hidden = true; $(back).hidden = true; document.body.style.overflow = ''; }
+$('openAll').addEventListener('click', () => { if (!query()){ toast('Type a whisky name first.'); $('q').focus(); return; } remember(query()); saRender(); openDrawer('sa', 'saBack'); $('saAll').focus(); });
+$('saClose').addEventListener('click', () => closeDrawer('sa', 'saBack'));
+$('saBack').addEventListener('click', () => closeDrawer('sa', 'saBack'));
+$('saScope').addEventListener('click', e => { const b = e.target.closest('[data-sacat]'); if (!b) return; const id = b.dataset.sacat; saOff = saOff.includes(id) ? saOff.filter(x => x !== id) : [...saOff, id]; store.set('wf-sa-off', saOff); saRender(); });
+$('saReset').addEventListener('click', () => { saDone = new Set(); $('saNote').hidden = true; saRender(); });
+$('saAll').addEventListener('click', () => {
+  const todo = saItems.filter(x => !saDone.has(x.key)); let ok = 0;
+  for (const x of todo){ let w = null; try { w = window.open(x.href, '_blank'); } catch(e){} if (!w) break; try { w.opener = null; } catch(e){} saDone.add(x.key); ok++; }
+  const left = todo.length - ok;
+  if (left){ $('saNote').hidden = false; $('saNote').textContent = ok ? `Opened ${ok}. Your browser blocked the other ${left}. Allow pop-ups for this site and press Open remaining, or use Open next.` : 'Your browser blocks opening several tabs at once. Use Open next: each tap opens the next source.'; }
+  saRender();
+});
+function saMark(key){ saDone.add(key); setTimeout(saRender, 0); }
+$('saNext').addEventListener('click', e => { const n = saItems.find(x => !saDone.has(x.key)); if (!n){ e.preventDefault(); return; } saMark(n.key); });
+$('saList').addEventListener('click', e => { const a = e.target.closest('[data-sakey]'); if (a) saMark(a.dataset.sakey); });
+
+/* =====================================================================
+   TASTINGS: IndexedDB on this device (photos included).
+   ===================================================================== */
+let tastings = [], db = null;
+function idb(){ return new Promise((res, rej) => { const r = indexedDB.open('whisky-finder', 1); r.onupgradeneeded = () => r.result.createObjectStore('tastings', {keyPath:'id'}); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); }
+function tx(mode, fn){ return new Promise((res, rej) => { if (!db) return res(); const t = db.transaction('tastings', mode); const st = t.objectStore('tastings'); const out = fn(st); t.oncomplete = () => res(out && out.result); t.onerror = () => rej(t.error); }); }
+async function loadTastings(){
+  try { db = await idb(); const all = await tx('readonly', st => st.getAll()); tastings = all || []; }
+  catch(e){ db = null; tastings = store.get('wf-tastings', []); }
+  renderLog(); renderFind(); fillList();
+}
+async function putT(t){ if (db) await tx('readwrite', st => st.put(t)); else store.set('wf-tastings', tastings); }
+async function delT(id){ if (db) await tx('readwrite', st => st.delete(id)); else store.set('wf-tastings', tastings); }
+const fmtDate = d => { try { return new Date(d + 'T00:00:00').toLocaleDateString('en-AU', {day:'numeric', month:'short', year:'numeric'}); } catch(e){ return d; } };
+const BOTTLE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M10 2h4v4l1.5 2.5V20a2 2 0 0 1-2 2h-3a2 2 0 0 1-2-2V8.5L10 6z"/><path d="M8.5 13h7"/></svg>';
+function renderLog(){
+  $('logCount').textContent = tastings.length ? ' ' + tastings.length : '';
+  const n = tastings.length, avg = n ? tastings.reduce((a, t) => a + (+t.score || 0), 0) / n : 0;
+  const top = [...tastings].sort((a, b) => b.score - a.score)[0];
+  $('stats').innerHTML = `<div class="stat"><div class="k">Tasted</div><div class="v">${n}</div></div><div class="stat"><div class="k">Average score</div><div class="v">${n ? avg.toFixed(1) : '–'} <small>${n ? bandOf(avg)[1] : ''}</small></div></div><div class="stat top"><div class="k">Top rated</div><div class="t">${top ? `<b>${esc(top.name)}</b> · ${top.score}` : 'Nothing yet'}</div></div>`;
+  const q = norm($('lq').value), c = $('lcty').value, sort = $('lsort').value;
+  let list = tastings.filter(t => (!c || t.cty === c) && (!q || norm([t.name, t.dist, t.region, t.cask, t.notes, t.nose, t.palate, t.finish].join(' ')).includes(q)));
+  list.sort(sort === 'score' ? (a, b) => b.score - a.score : sort === 'name' ? (a, b) => a.name.localeCompare(b.name) : (a, b) => (b.date || '').localeCompare(a.date || '') || b.created - a.created);
+  if (!tastings.length){
+    $('tlist').innerHTML = `<div class="empty"><h3>No tastings yet</h3><p style="margin:0;max-width:46ch">Add a whisky you have tried: a photo of the bottle, your score out of 100 and notes on nose, palate and finish. Scores show up when you search that bottle later.</p><button class="btn primary" type="button" data-add>+ Add your first tasting</button></div>`;
+    return;
+  }
+  $('tlist').innerHTML = list.length ? `<div class="tlist">${list.map(t => {
+    const b = bandOf(t.score);
+    const sub = [t.cty && t.cty !== 'other' ? `<span class="cty ${t.cty}">${CTYNAME[t.cty]}</span>` : '', t.region ? esc(t.region) : '', t.age ? esc(t.age) + ' yo' : '', t.abv ? esc(t.abv) + '%' : '', t.date ? esc(fmtDate(t.date)) : ''].filter(Boolean).join('<span aria-hidden="true">·</span>');
+    return `<article class="tcard">${t.photo ? `<img class="thumb" src="${esc(t.photo)}" alt="">` : `<div class="thumb">${BOTTLE}</div>`}<div style="min-width:0"><div class="nm">${esc(t.name)}</div><div class="sub">${sub}</div>${t.notes || t.palate ? `<div class="note">${esc(t.notes || t.palate)}</div>` : ''}<div class="acts"><button type="button" class="linkbtn" data-find="${esc(t.id)}">Find ratings</button><button type="button" class="linkbtn" data-edit="${esc(t.id)}">Edit</button></div></div><div class="score ${t.score >= 90 ? 'b5' : ''}"><b>${t.score}</b><span>${esc(b[1])}</span></div></article>`;
+  }).join('')}</div>` : '<div class="empty"><p style="margin:0">No tastings match. Clear the search or country filter.</p></div>';
+}
+['lq','lcty','lsort'].forEach(id => $(id).addEventListener(id === 'lq' ? 'input' : 'change', renderLog));
+$('tlist').addEventListener('click', e => {
+  if (e.target.closest('[data-add]')) return openEditor(null);
+  const f = e.target.closest('[data-find]'), ed = e.target.closest('[data-edit]');
+  if (f){ const t = tastings.find(x => x.id === f.dataset.find); $('q').value = t.name; selectTab('find'); renderFind(); window.scrollTo({top:0, behavior:'smooth'}); }
+  if (ed) openEditor(tastings.find(x => x.id === ed.dataset.edit));
+});
+$('addT').addEventListener('click', () => openEditor(null));
+
+/* ---------- editor ---------- */
+let editing = null, ePhoto = '';
+const F = ['Name','Dist','Cty','Age','Abv','Region','Cask','Nose','Palate','Finish','Notes','Date','Price','Where'];
+function setScore(v){ v = Math.max(50, Math.min(100, Math.round(+v || 50))); $('eScore').value = v; $('eScoreR').value = v; const b = bandOf(v); $('eBand').textContent = `${b[1]}: ${b[2].toLowerCase()}`; }
+function setPhoto(src){ ePhoto = src || ''; $('eThumb').outerHTML = ePhoto ? `<img class="thumb" id="eThumb" src="${esc(ePhoto)}" alt="Bottle photo">` : `<div class="thumb" id="eThumb">${BOTTLE}</div>`; $('ePhotoDel').hidden = !ePhoto; $('ePhotoBtn').textContent = ePhoto ? 'Change photo' : 'Add bottle photo'; }
+function fillFromName(force){
+  const d = distilleryFor($('eName').value); if (!d) return;
+  if (force || !$('eDist').value) $('eDist').value = d.name;
+  if (force || !$('eRegion').value) $('eRegion').value = d.region;
+  $('eCty').value = d.cty;
+  if (!$('eAge').value){ const a = ageOf($('eName').value); if (a) $('eAge').value = a; }
+}
+function openEditor(t, pre){
+  editing = t || null;
+  $('eEyebrow').textContent = t ? 'Edit tasting' : 'New tasting'; $('eH').textContent = t ? t.name : 'Add a tasting';
+  const v = t || {};
+  F.forEach(k => $('e' + k).value = v[k.toLowerCase()] != null ? v[k.toLowerCase()] : '');
+  if (!t){ $('eCty').value = 'SC'; $('eDate').value = new Date().toISOString().slice(0, 10); }
+  setScore(t ? t.score : 85); setPhoto(t ? t.photo : (pre && pre.photo) || '');
+  if (pre){ $('eName').value = pre.name || ''; fillFromName(true); if (pre.text){ const a = abvOf(pre.text); if (a) $('eAbv').value = a; const g = ageOf(pre.text); if (g) $('eAge').value = g; } }
+  $('eDel').hidden = !t; $('eDelQ').hidden = true; $('eDel').textContent = 'Delete'; $('eErr').textContent = '';
+  openDrawer('editor', 'eBack'); setTimeout(() => $('eName').focus(), 50);
+}
+function closeEditor(){ closeDrawer('editor', 'eBack'); }
+$('eName').addEventListener('change', () => fillFromName(false));
+$('eScoreR').addEventListener('input', e => setScore(e.target.value));
+$('eScore').addEventListener('change', e => setScore(e.target.value));
+$('ePhotoBtn').addEventListener('click', () => $('ePhotoFile').click());
+$('ePhotoDel').addEventListener('click', () => setPhoto(''));
+$('ePhotoFile').addEventListener('change', async e => { const f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return; try { const img = await loadImage(f); setPhoto(canvasFrom(img, 480).toDataURL('image/jpeg', .78)); } catch(x){ toast('That photo could not be opened.'); } });
+$('eClose').addEventListener('click', closeEditor); $('eCancel').addEventListener('click', closeEditor); $('eBack').addEventListener('click', closeEditor);
+$('editor').addEventListener('submit', async e => {
+  e.preventDefault();
+  const name = $('eName').value.trim(); if (!name){ $('eErr').textContent = 'Give the whisky a name.'; $('eName').focus(); return; }
+  const t = editing ? {...editing} : {id:'t' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), created:Date.now()};
+  F.forEach(k => t[k.toLowerCase()] = $('e' + k).value.trim ? $('e' + k).value.trim() : $('e' + k).value);
+  t.name = name; t.score = +$('eScore').value; t.photo = ePhoto; t.updated = Date.now();
+  const i = tastings.findIndex(x => x.id === t.id); if (i >= 0) tastings[i] = t; else tastings.push(t);
+  try { await putT(t); toast(editing ? 'Tasting updated.' : 'Tasting saved.'); }
+  catch(x){ toast('Could not save on this device. Your storage may be full.'); }
+  closeEditor(); renderLog(); renderFind(); fillList();
+});
+$('eDel').addEventListener('click', async () => {
+  if ($('eDelQ').hidden){ $('eDelQ').hidden = false; $('eDel').textContent = 'Yes, delete'; return; }
+  tastings = tastings.filter(x => x.id !== editing.id); await delT(editing.id).catch(() => {});
+  toast('Tasting deleted.'); closeEditor(); renderLog(); renderFind();
+});
+document.addEventListener('keydown', e => { if (e.key !== 'Escape') return; if (!$('editor').hidden) closeEditor(); else if (!$('sa').hidden) closeDrawer('sa', 'saBack'); });
+
+/* ---------- backup ---------- */
+$('exportBtn').addEventListener('click', async () => {
+  const body = JSON.stringify({app:'whisky-ratings-finder', version:1, exportedAt:new Date().toISOString(), tastings}, null, 1);
+  const name = 'whisky-tastings-' + new Date().toISOString().slice(0, 10) + '.json', blob = new Blob([body], {type:'application/json'});
+  try { const file = new File([blob], name, {type:'application/json'}); if (navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file], title:'Whisky tastings backup'}); return; } }
+  catch(e){ if (e && e.name === 'AbortError') return; }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  toast('Backup saved as ' + name);
+});
+$('importBtn').addEventListener('click', () => $('importFile').click());
+$('importFile').addEventListener('change', async e => {
+  const f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return;
+  try {
+    const d = JSON.parse(await f.text()); if (!d || !Array.isArray(d.tastings)) throw 0;
+    let added = 0;
+    for (const x of d.tastings){
+      if (!x || typeof x.name !== 'string' || !x.id || tastings.some(t => t.id === x.id)) continue;
+      const t = {id:String(x.id), created:+x.created || Date.now(), score:Math.max(50, Math.min(100, +x.score || 80)), photo:typeof x.photo === 'string' && x.photo.startsWith('data:image/') ? x.photo : ''};
+      F.forEach(k => { const v = x[k.toLowerCase()]; t[k.toLowerCase()] = v == null ? '' : String(v); }); t.name = x.name;
+      if (!CTYNAME[t.cty]) t.cty = 'other';
+      tastings.push(t); await putT(t); added++;
+    }
+    renderLog(); renderFind(); fillList(); toast(`Imported ${added} tasting${added === 1 ? '' : 's'}.`);
+  } catch(err){ toast('That file is not a Whisky Ratings Finder backup.'); }
+});
+
+/* ---------- scales ---------- */
+$('scaleRows').innerHTML = SCALES.map(r => `<tr><td class="sys">${esc(r[0])}</td><td>${esc(r[1])}</td><td class="sc">${esc(r[2])}</td><td class="rd">${esc(r[3])}</td></tr>`).join('');
+$('bands').innerHTML = BANDS.map((b, i) => {
+  const range = i === 0 ? '95–100' : i === BANDS.length - 1 ? 'Under 70' : `${b[0]}–${BANDS[i-1][0] - 1}`;
+  return `<div class="band"><b>${range}</b> <strong>${esc(b[1])}</strong><span>${esc(b[2])}</span></div>`;
+}).join('');
+
+/* ---------- tabs ---------- */
+function selectTab(id){
+  ['find','log','scales'].forEach(t => { const on = t === id; $('tab-' + t).setAttribute('aria-selected', on); $('p-' + t).hidden = !on; });
+  store.set('wf-tab', id);
+}
+document.querySelector('.tabs').addEventListener('click', e => { const b = e.target.closest('.tab'); if (b) selectTab(b.id.slice(4)); });
+
+/* ---------- start ---------- */
+function netState(){ $('offline').hidden = navigator.onLine !== false; }
+addEventListener('online', netState); addEventListener('offline', netState); netState();
+if ('serviceWorker' in navigator && location.protocol === 'https:') addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+selectTab(store.get('wf-tab', 'find'));
+renderFind(); fillList(); loadTastings();
+</script>
+</body>
+</html>
