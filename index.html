@@ -217,6 +217,21 @@ input[type=range]{width:100%;accent-color:var(--amber);height:28px}
 .sa-row.next{background:var(--amber-soft)}
 .sa-note{font-size:13.5px;background:var(--amber-soft);border-radius:8px;padding:8px 11px}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 15px;border-radius:9px;font-size:14px;z-index:60;max-width:calc(100% - 32px)}
+/* my sources */
+.mybar{display:flex;justify-content:space-between;align-items:center;gap:10px 16px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-top:16px}
+.mybar b{font-weight:600}
+.srcwrap{position:relative;min-width:0;display:flex}
+.srcwrap a.src{flex:1;padding-right:56px}
+.srcwrap a.src .n::after{content:none}
+.srcwrap .esrc{position:absolute;top:8px;right:8px;height:28px;padding:0 8px;border-radius:7px;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);cursor:pointer;font-size:12.5px;font-weight:600}
+.srcwrap .esrc:hover{border-color:var(--amber);color:var(--ink)}
+.how.mine{background:var(--ink);color:var(--bg)}
+.how.open{background:var(--peat-soft);color:var(--peat)}
+.kinds{display:grid;gap:8px}
+.kinds label{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;font-size:14.5px;font-weight:600;color:var(--ink);text-transform:none;letter-spacing:0}
+.kinds label small{display:block;font-weight:400;color:var(--ink-3);font-size:13px}
+.kinds input{accent-color:var(--amber);margin-top:4px}
+.kinds label:has(input:checked){border-color:var(--amber);background:var(--amber-soft)}
 .drawer:not([hidden]) ~ .toast{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
 footer{color:var(--ink-3);font-size:13px;padding-block:0 40px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -287,7 +302,12 @@ footer{color:var(--ink-3);font-size:13px;padding-block:0 40px}
     <div class="legend">
       <span><span class="how direct">Direct</span> opens the site's own search</span>
       <span><span class="how web">Web</span> Google search limited to that source</span>
+      <span><span class="how mine">Mine</span> a source you added</span>
       <span><span class="scale">100 pts</span> the source's rating scale (see Rating scales)</span>
+    </div>
+    <div class="mybar">
+      <div><b>My sources</b> <span class="hint" id="mineCount">Add any review site, database, shop or bookmark. It appears with the others and searches the same name.</span></div>
+      <button class="btn small" id="addSrc" type="button">+ Add a source</button>
     </div>
     <div id="cats"></div>
   </section>
@@ -303,7 +323,7 @@ footer{color:var(--ink-3);font-size:13px;padding-block:0 40px}
     </div>
     <div id="tlist"></div>
     <div class="backup">
-      <span>Your tastings and photos are stored on this device only. To move them between iPhone and Mac:</span>
+      <span>Your tastings, photos and added sources are stored on this device only. To move them between iPhone and Mac:</span>
       <button class="btn small" id="exportBtn" type="button">Export backup</button>
       <button class="btn small" id="importBtn" type="button">Import backup</button>
       <input type="file" id="importFile" accept="application/json,.json" hidden>
@@ -369,6 +389,40 @@ footer{color:var(--ink-3);font-size:13px;padding-block:0 40px}
     <span class="sp"></span>
     <span class="confirm" id="eDelQ" hidden>Delete this tasting?</span>
     <button class="btn danger" type="button" id="eDel" hidden>Delete</button>
+  </div>
+</form>
+
+<!-- add / edit a source -->
+<div class="back" id="sBack" hidden></div>
+<form class="drawer" id="srcForm" role="dialog" aria-modal="true" aria-labelledby="sH" hidden novalidate>
+  <div class="dh"><div><div class="eyebrow" id="sEyebrow">My sources</div><h2 id="sH">Add a source</h2></div><button class="x" type="button" id="sClose" aria-label="Close">×</button></div>
+  <div class="db">
+    <label class="f">Name<input id="sName" type="text" placeholder="e.g. Whisky Waffle, Nicks rare whisky" autocomplete="off"></label>
+    <div class="g2">
+      <label class="f">Category<select id="sCat"></select></label>
+      <label class="f">Country<select id="sCty"><option value="*">All whisky</option><option value="SC">Scotch</option><option value="JP">Japanese</option><option value="AU">Australian</option></select></label>
+    </div>
+    <div class="f">How should it search?
+      <div class="kinds" role="radiogroup" aria-label="How it searches">
+        <label><input type="radio" name="sKind" value="search" checked><span>Search address<small>Runs the whisky name on the site itself. Best for databases and shops.</small></span></label>
+        <label><input type="radio" name="sKind" value="site"><span>Website<small>Google search limited to this site. Works for any blog or magazine.</small></span></label>
+        <label><input type="radio" name="sKind" value="link"><span>Bookmark<small>Opens the page and copies the whisky name so you can paste it.</small></span></label>
+      </div>
+    </div>
+    <label class="f"><span id="sUrlT">Search results address</span><input id="sUrl" type="text" inputmode="url" autocomplete="off" placeholder="https://…"><span class="hint" id="sUrlH"></span></label>
+    <label class="f" id="sWordL">Word you searched for<input id="sWord" type="text" autocomplete="off" placeholder="talisker"><span class="hint">It is swapped for the whisky name each time you search.</span></label>
+    <div class="g2">
+      <label class="f">Rating scale (optional)<input id="sScale" type="text" autocomplete="off" placeholder="e.g. 100 pts, 5★"></label>
+      <label class="f">Note (optional)<input id="sDesc" type="text" autocomplete="off" placeholder="What it is good for"></label>
+    </div>
+    <span class="confirm" id="sErr" role="alert"></span>
+  </div>
+  <div class="df">
+    <button class="btn primary" type="submit">Save source</button>
+    <button class="btn" type="button" id="sCancel">Cancel</button>
+    <span class="sp"></span>
+    <span class="confirm" id="sDelQ" hidden>Remove this source?</span>
+    <button class="btn danger" type="button" id="sDel" hidden>Remove</button>
   </div>
 </form>
 
@@ -468,11 +522,13 @@ const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp
 const store = {get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;}}, set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}};
 let tt; function toast(m){ let t = document.querySelector('.toast'); if (!t){ t = document.createElement('div'); t.className = 'toast'; t.setAttribute('role','status'); document.body.appendChild(t); } t.textContent = m; t.hidden = false; clearTimeout(tt); tt = setTimeout(() => t.hidden = true, 2800); }
 function hrefOf(s, q){
+  if (s.k === 'open') return s.url;
   if (s.k === 'direct') return s.u(q);
   const dom = s.dm ? '(' + s.dm.map(d => 'site:' + d).join(' OR ') + ') ' : '';
   return google(dom + q + (s.p ? ' ' + s.p : ''));
 }
 function homeOf(s){
+  if (s.k === 'open') return s.url;
   if (s.dm) return 'https://' + s.dm[0];
   if (s.k === 'direct'){ try { return new URL(s.u('x')).origin; } catch(e){} }
   return google(s.n);
@@ -528,14 +584,33 @@ function distilleryFor(name){ const r = findDistilleries(name, 1)[0]; return r &
 /* ---------- FIND: render sources ---------- */
 let cty = store.get('wf-cty', 'all');
 function query(){ return $('q').value.trim(); }
+/* ---------- my sources: kept in this browser and in backups ---------- */
+let custom = store.get('wf-sources', []);
+function saveCustom(){ store.set('wf-sources', custom); }
+function toItem(c){
+  const base = {n:c.name, d:c.desc || (c.kind === 'search' ? 'My search address' : c.kind === 'site' ? 'Searches this website' : 'My bookmark'), s:c.scale || '', f:c.f || '*', mine:true, id:c.id};
+  if (c.kind === 'search') return {...base, k:'direct', u:q => c.url.split('{q}').join(E(q))};
+  if (c.kind === 'site') return {...base, k:'web', dm:[c.url]};
+  return {...base, k:'open', url:c.url};
+}
+function allCats(){
+  const own = custom.filter(c => c.cat === 'mine').map(toItem);
+  const out = own.length ? [{id:'mine', name:'My sources', blurb:'Sources you added that are not in another category.', items:own}] : [];
+  CATS.forEach(c => out.push({...c, items:[...c.items, ...custom.filter(x => x.cat === c.id).map(toItem)]}));
+  return out;
+}
 function visibleCats(){
-  return CATS.map(c => ({...c, items:c.items.filter(s => cty === 'all' || s.f === '*' || s.f === cty)})).filter(c => c.items.length);
+  return allCats().map(c => ({...c, items:c.items.filter(s => cty === 'all' || s.f === '*' || s.f === cty)})).filter(c => c.items.length);
 }
 function renderFind(){
   const q = query();
   document.querySelectorAll('#ctyChips .chip').forEach(b => b.setAttribute('aria-pressed', b.dataset.cty === cty));
   $('cats').innerHTML = visibleCats().map(c => `<section class="cat" id="cat-${c.id}"><div class="cat-h"><h2>${esc(c.name)}</h2><p>${esc(c.blurb)}</p></div><div class="grid">${
-    c.items.map(s => `<a class="src" href="${esc(q ? hrefOf(s, q) : homeOf(s))}" target="_blank" rel="noopener"><span class="n">${esc(s.n)}</span><span class="d">${esc(s.d)}</span><span class="meta"><span class="how ${s.k === 'direct' ? 'direct' : 'web'}">${s.k === 'direct' ? 'Direct' : 'Web'}</span><span class="scale">${esc(s.s)}</span>${s.f !== '*' ? `<span class="cty ${s.f}">${s.f === 'JP' ? 'Japan' : s.f === 'AU' ? 'Australia' : 'Scotland'}</span>` : ''}</span></a>`).join('')
+    c.items.map(s => {
+      const how = s.k === 'direct' ? ['direct','Direct'] : s.k === 'open' ? ['open','Bookmark'] : ['web','Web'];
+      const card = `<a class="src" href="${esc(q ? hrefOf(s, q) : homeOf(s))}" target="_blank" rel="noopener"${s.k === 'open' ? ' data-copy="1"' : ''}><span class="n">${esc(s.n)}</span><span class="d">${esc(s.d)}</span><span class="meta">${s.mine ? '<span class="how mine">Mine</span>' : ''}<span class="how ${how[0]}">${how[1]}</span>${s.s ? `<span class="scale">${esc(s.s)}</span>` : ''}${s.f !== '*' ? `<span class="cty ${s.f}">${s.f === 'JP' ? 'Japan' : s.f === 'AU' ? 'Australia' : 'Scotland'}</span>` : ''}</span></a>`;
+      return s.mine ? `<div class="srcwrap">${card}<button type="button" class="esrc" data-esrc="${esc(s.id)}" aria-label="Edit ${esc(s.n)}">Edit</button></div>` : card;
+    }).join('')
   }</div></section>`).join('');
   const d = q ? distilleryFor(q) : null;
   $('match').hidden = !d;
@@ -761,11 +836,69 @@ $('eDel').addEventListener('click', async () => {
   tastings = tastings.filter(x => x.id !== editing.id); await delT(editing.id).catch(() => {});
   toast('Tasting deleted.'); closeEditor(); renderLog(); renderFind();
 });
-document.addEventListener('keydown', e => { if (e.key !== 'Escape') return; if (!$('editor').hidden) closeEditor(); else if (!$('sa').hidden) closeDrawer('sa', 'saBack'); });
+document.addEventListener('keydown', e => { if (e.key !== 'Escape') return; if (!$('editor').hidden) closeEditor(); else if (!$('srcForm').hidden) closeDrawer('srcForm', 'sBack'); else if (!$('sa').hidden) closeDrawer('sa', 'saBack'); });
+
+/* ---------- add / edit a source ---------- */
+let editingSrc = null;
+const kindNow = () => document.querySelector('input[name=sKind]:checked').value;
+function syncKind(){
+  const k = kindNow(), hasQ = $('sUrl').value.includes('{q}');
+  $('sWordL').hidden = k !== 'search' || hasQ;
+  $('sUrlT').textContent = k === 'search' ? 'Search results address' : k === 'site' ? 'Website address' : 'Page address';
+  $('sUrlH').innerHTML = k === 'search' ? 'On the site, search for any whisky (for example <b>talisker</b>), then copy the address of the results page and paste it here.'
+    : k === 'site' ? 'For example <b>whiskywaffle.com</b> or <b>whiskymag.com/reviews</b>.' : 'Any page you want one tap away, such as a society members\' page.';
+}
+document.querySelectorAll('input[name=sKind]').forEach(r => r.addEventListener('change', syncKind));
+$('sUrl').addEventListener('input', syncKind);
+function openSrc(c){
+  editingSrc = c || null;
+  $('sCat').innerHTML = '<option value="mine">My sources (own group)</option>' + CATS.map(x => `<option value="${x.id}">${esc(x.name)}</option>`).join('');
+  $('sEyebrow').textContent = c ? 'Edit source' : 'My sources'; $('sH').textContent = c ? c.name : 'Add a source';
+  $('sName').value = c ? c.name : ''; $('sCat').value = c ? c.cat : 'mine'; $('sCty').value = c ? (c.f || '*') : '*';
+  document.querySelector(`input[name=sKind][value=${c ? c.kind : 'search'}]`).checked = true;
+  $('sUrl').value = c ? c.url : ''; $('sWord').value = ''; $('sScale').value = c ? (c.scale || '') : ''; $('sDesc').value = c ? (c.desc || '') : '';
+  $('sErr').textContent = ''; $('sDel').hidden = !c; $('sDelQ').hidden = true; $('sDel').textContent = 'Remove';
+  syncKind(); openDrawer('srcForm', 'sBack'); setTimeout(() => $('sName').focus(), 50);
+}
+function closeSrc(){ closeDrawer('srcForm', 'sBack'); }
+$('addSrc').addEventListener('click', () => openSrc(null));
+$('sClose').addEventListener('click', closeSrc); $('sCancel').addEventListener('click', closeSrc); $('sBack').addEventListener('click', closeSrc);
+$('cats').addEventListener('click', e => {
+  const b = e.target.closest('[data-esrc]'); if (b){ e.preventDefault(); openSrc(custom.find(c => c.id === b.dataset.esrc)); return; }
+  const a = e.target.closest('a[data-copy]'); const q = query();
+  if (a && q){ try { navigator.clipboard.writeText(q).then(() => toast('Whisky name copied. Paste it into the site\'s search.'), () => {}); } catch(x){} }
+});
+$('srcForm').addEventListener('submit', e => {
+  e.preventDefault();
+  const name = $('sName').value.trim(), kind = kindNow(), word = $('sWord').value.trim();
+  let url = $('sUrl').value.trim(), err = '';
+  if (!name) err = 'Give the source a name.'; else if (!url) err = 'Paste an address.';
+  if (!err && kind !== 'site' && !/^https?:\/\//i.test(url)) url = 'https://' + url;
+  if (!err && kind !== 'site'){ try { new URL(url.split('{q}').join('x')); } catch(x){ err = 'That address does not look right. Copy it from the browser\'s address bar.'; } }
+  if (!err && kind === 'site') url = url.replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/+$/, '');
+  if (!err && kind === 'search' && !url.includes('{q}')){
+    if (!word) err = 'Enter the word you searched for, so it can be swapped for the whisky name.';
+    else {
+      const forms = [encodeURIComponent(word), word.split(' ').map(encodeURIComponent).join('+'), word.replace(/ /g, '+'), word, encodeURIComponent(word.toLowerCase()), word.toLowerCase(), word.toLowerCase().replace(/ /g, '+'), word.toLowerCase().replace(/ /g, '-')];
+      const hit = forms.find(f => f && url.includes(f));
+      if (!hit) err = `Could not find "${word}" in that address. Check the spelling, or choose Website instead.`;
+      else url = url.split(hit).join('{q}');
+    }
+  }
+  if (err){ $('sErr').textContent = err; return; }
+  const rec = {id:editingSrc ? editingSrc.id : 's' + Date.now().toString(36), name, cat:$('sCat').value, f:$('sCty').value, kind, url, scale:$('sScale').value.trim(), desc:$('sDesc').value.trim()};
+  const i = custom.findIndex(c => c.id === rec.id); if (i >= 0) custom[i] = rec; else custom.push(rec);
+  saveCustom(); closeSrc(); renderFind(); toast(editingSrc ? `Updated "${name}".` : `Added "${name}".`);
+  const sec = document.getElementById('cat-' + rec.cat); if (sec) sec.scrollIntoView({behavior:'smooth', block:'start'});
+});
+$('sDel').addEventListener('click', () => {
+  if ($('sDelQ').hidden){ $('sDelQ').hidden = false; $('sDel').textContent = 'Yes, remove'; return; }
+  custom = custom.filter(c => c.id !== editingSrc.id); saveCustom(); closeSrc(); renderFind(); toast(`Removed "${editingSrc.name}".`);
+});
 
 /* ---------- backup ---------- */
 $('exportBtn').addEventListener('click', async () => {
-  const body = JSON.stringify({app:'whisky-ratings-finder', version:1, exportedAt:new Date().toISOString(), tastings}, null, 1);
+  const body = JSON.stringify({app:'whisky-ratings-finder', version:2, exportedAt:new Date().toISOString(), tastings, sources:custom}, null, 1);
   const name = 'whisky-tastings-' + new Date().toISOString().slice(0, 10) + '.json', blob = new Blob([body], {type:'application/json'});
   try { const file = new File([blob], name, {type:'application/json'}); if (navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file], title:'Whisky tastings backup'}); return; } }
   catch(e){ if (e && e.name === 'AbortError') return; }
@@ -776,16 +909,23 @@ $('importBtn').addEventListener('click', () => $('importFile').click());
 $('importFile').addEventListener('change', async e => {
   const f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return;
   try {
-    const d = JSON.parse(await f.text()); if (!d || !Array.isArray(d.tastings)) throw 0;
-    let added = 0;
-    for (const x of d.tastings){
+    const d = JSON.parse(await f.text()); if (!d || (!Array.isArray(d.tastings) && !Array.isArray(d.sources))) throw 0;
+    let added = 0, addS = 0;
+    (d.sources || []).forEach(x => {
+      if (!x || typeof x.name !== 'string' || typeof x.url !== 'string' || !['search','site','link'].includes(x.kind)) return;
+      if (x.kind !== 'site' && !/^https?:\/\//i.test(x.url)) return;
+      if (custom.some(c => c.url === x.url && c.name === x.name)) return;
+      custom.push({id:String(x.id || 's' + Date.now().toString(36) + addS), name:x.name, cat:x.cat === 'mine' || CATS.some(c => c.id === x.cat) ? x.cat : 'mine', f:['*','SC','JP','AU'].includes(x.f) ? x.f : '*', kind:x.kind, url:x.url, scale:String(x.scale || ''), desc:String(x.desc || '')}); addS++;
+    });
+    if (addS) saveCustom();
+    for (const x of (d.tastings || [])){
       if (!x || typeof x.name !== 'string' || !x.id || tastings.some(t => t.id === x.id)) continue;
       const t = {id:String(x.id), created:+x.created || Date.now(), score:Math.max(50, Math.min(100, +x.score || 80)), photo:typeof x.photo === 'string' && x.photo.startsWith('data:image/') ? x.photo : ''};
       F.forEach(k => { const v = x[k.toLowerCase()]; t[k.toLowerCase()] = v == null ? '' : String(v); }); t.name = x.name;
       if (!CTYNAME[t.cty]) t.cty = 'other';
       tastings.push(t); await putT(t); added++;
     }
-    renderLog(); renderFind(); fillList(); toast(`Imported ${added} tasting${added === 1 ? '' : 's'}.`);
+    renderLog(); renderFind(); fillList(); toast(`Imported ${added} tasting${added === 1 ? '' : 's'} and ${addS} source${addS === 1 ? '' : 's'}.`);
   } catch(err){ toast('That file is not a Whisky Ratings Finder backup.'); }
 });
 
