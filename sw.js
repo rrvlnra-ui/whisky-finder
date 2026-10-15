@@ -1,9 +1,9 @@
 /* Whisky Ratings Finder: offline support.
-   The app (page, distillery list, icons, fonts) and the label reader are
+   The app (page, distillery list, Dram Finder data, icons, fonts) and the label reader are
    cached so the app opens without a connection. Rating sources always need
    the network. Change VERSION whenever you upload new files. */
-const VERSION = 'wf-v1';
-const SHELL = ['./', './index.html', './distilleries.js', './manifest.webmanifest',
+const VERSION = 'wf-v2';
+const SHELL = ['./', './index.html', './distilleries.js', './dram-data.js', './manifest.webmanifest',
   './icons/apple-touch-icon.png', './icons/icon-192.png', './icons/icon-512.png',
   './icons/icon-maskable-512.png', './icons/favicon-32.png'];
 const RUNTIME = ['fonts.googleapis.com', 'fonts.gstatic.com', 'cdn.jsdelivr.net'];
@@ -20,7 +20,7 @@ self.addEventListener('fetch', e => {
   const req = e.request; if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (url.origin === location.origin){
-    if (req.mode === 'navigate' || url.pathname.endsWith('/index.html') || url.pathname.endsWith('/distilleries.js')){
+    if (req.mode === 'navigate' || url.pathname.endsWith('/index.html') || url.pathname.endsWith('/distilleries.js') || url.pathname.endsWith('/dram-data.js')){
       // Network first so updates arrive; cache when offline.
       e.respondWith(fetch(req).then(res => { const copy = res.clone(); caches.open(VERSION).then(c => c.put(req.mode === 'navigate' ? './index.html' : req, copy)); return res; })
         .catch(() => caches.match(req.mode === 'navigate' ? './index.html' : req)));

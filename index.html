@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Whisky Ratings Finder</title>
-<meta name="description" content="Search Scotch, Japanese and Australian whisky ratings by name or bottle photo, and keep your own tasting log.">
+<meta name="description" content="Search whisky ratings by name or bottle photo, browse 650 bottles with critic scores, medals and prices, and keep your own tasting log.">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -29,6 +29,7 @@
   --jp:#a22a3c; --jp-soft:#f6dfe2;
   --au:#2c5a8a; --au-soft:#dde7f3;
   --danger:#b42318;
+  --gold:#8a6a12; --gold-soft:#f3e9c6; --plat:#4b5a6a; --plat-soft:#e1e7ee;
   --shadow:0 1px 2px rgba(28,36,32,.07);
   --display:"Young Serif",Georgia,"Times New Roman",serif;
   --sans:"Instrument Sans","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
@@ -44,6 +45,7 @@
     --jp:#f0909e; --jp-soft:#3a1d23;
     --au:#93bbe8; --au-soft:#1c2b3d;
     --danger:#ff8a80; --shadow:none;
+    --gold:#e3c25e; --gold-soft:#34301a; --plat:#b9c6d4; --plat-soft:#232b33;
   }
 }
 :root[data-theme="dark"]{
@@ -55,6 +57,7 @@
   --jp:#f0909e; --jp-soft:#3a1d23;
   --au:#93bbe8; --au-soft:#1c2b3d;
   --danger:#ff8a80; --shadow:none;
+  --gold:#e3c25e; --gold-soft:#34301a; --plat:#b9c6d4; --plat-soft:#232b33;
 }
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
@@ -233,6 +236,78 @@ input[type=range]{width:100%;accent-color:var(--amber);height:28px}
 .kinds input{accent-color:var(--amber);margin-top:4px}
 .kinds label:has(input:checked){border-color:var(--amber);background:var(--amber-soft)}
 .drawer:not([hidden]) ~ .toast{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+/* dram finder */
+.dr-views{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.dr-search input{height:52px;font-size:18px;border:1.5px solid var(--amber)}
+.dr-filters{display:grid;grid-template-columns:1fr;gap:12px;margin-top:14px}
+.dr-fwrap{margin-top:14px}
+.dr-fwrap summary{cursor:pointer;font-weight:600;font-size:14px;color:var(--ink-2);display:inline-flex;gap:6px;align-items:center;padding:6px 12px;border:1px solid var(--line);border-radius:999px;background:var(--surface)}
+.dr-fwrap summary #dActive{font-family:var(--mono);font-size:12px;color:var(--amber)}
+.dr-fwrap .dr-filters{margin-top:12px}
+@media (min-width:761px){.dr-fwrap summary{display:none}.dr-fwrap{margin-top:0}}
+@media (min-width:760px){.dr-filters{grid-template-columns:1fr 1fr}.dr-filters .wide{grid-column:1/-1}}
+.dr-rail{display:grid;gap:6px;min-width:0;align-content:start}
+.dr-lbl{font-size:12px;font-weight:600;color:var(--ink-3);letter-spacing:.05em;text-transform:uppercase}
+.chip .dr-n{font-family:var(--mono);font-size:11px;opacity:.65;margin-left:4px}
+.chip.more{border-style:dashed;color:var(--ink-3)}
+.dr-bar{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;border-bottom:1.5px solid var(--ink);padding:18px 0 10px}
+.dr-count{font-family:var(--mono);font-size:13px}
+.dr-count b{color:var(--amber);font-weight:500}
+.dr-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.dr-tools select{height:36px;width:auto;font-size:14px;padding:0 10px}
+.dr-list{list-style:none;margin:0;padding:0}
+.dr-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 20px;padding:18px 0;border-bottom:1px solid var(--line)}
+.dr-row h3{font-family:var(--display);font-size:21px;line-height:1.2}
+.dr-where{color:var(--ink-3);font-size:14px;margin:2px 0 0}
+.dr-where strong{color:var(--ink);font-weight:600}
+.dr-notes{grid-column:1/-1;margin:2px 0 0;font-size:14px;max-width:70ch;color:var(--ink-2)}
+.dr-tags{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px}
+.dr-tag{font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;padding:2px 7px;border-radius:4px;background:var(--surface-2);color:var(--ink-2)}
+.dr-tag.mine{background:var(--amber-soft);color:var(--ink)}
+.dr-stat{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:13px;color:var(--ink-3);white-space:nowrap}
+.dr-stat .abv{display:block;font-size:20px;color:var(--ink)}
+.dr-peat{display:inline-flex;gap:2px;margin-top:6px;align-items:center}
+.dr-peat i{width:7px;height:7px;border-radius:50%;border:1px solid var(--peat)}
+.dr-peat i.on{background:var(--peat)}
+.dr-ratings{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr));gap:10px 18px;margin-top:6px;padding:10px 12px;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow)}
+.dr-r{display:grid;gap:2px;min-width:0;align-content:start}
+.dr-r.full{grid-column:1/-1}
+.dr-k{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+.dr-v{font-size:14px;font-variant-numeric:tabular-nums}
+.dr-v b{font-family:var(--mono);font-weight:500;font-size:18px}
+.dr-v small{color:var(--ink-3);font-size:12px}
+.dr-v a{color:var(--amber)}
+.dr-stars{position:relative;display:inline-block;font-size:14px;letter-spacing:1px;color:var(--line);vertical-align:-1px}
+.dr-stars span{position:absolute;inset:0;overflow:hidden;color:var(--amber);white-space:nowrap}
+.dr-medals{display:flex;flex-wrap:wrap;gap:5px}
+.dr-medal{font-family:var(--mono);font-size:11px;padding:2px 7px;border-radius:4px;text-decoration:none;border:1px solid transparent;max-width:100%}
+.dr-medal:hover{text-decoration:underline}
+.dr-medal.T{background:var(--gold);color:var(--bg);border-color:var(--gold);font-weight:600}
+.dr-medal.P{background:var(--plat-soft);color:var(--plat);border-color:var(--plat)}
+.dr-medal.DG,.dr-medal.M,.dr-medal.GG{background:var(--gold-soft);color:var(--gold);border-color:var(--gold)}
+.dr-medal.G{background:var(--gold-soft);color:var(--gold)}
+.dr-medal.S{background:var(--plat-soft);color:var(--ink)}
+.dr-medal.B{background:transparent;color:var(--ink);border-color:var(--plat-soft)}
+.dr-none{color:var(--ink-3);font-size:13px}
+.dr-offer{display:flex;justify-content:space-between;gap:12px;font-size:13.5px;border-bottom:1px dotted var(--line);padding-block:3px}
+.dr-offer:last-child{border-bottom:0}
+.dr-offer a{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--amber)}
+.dr-offer .p{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.dr-acts{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;font-size:13px;color:var(--ink-3);margin-top:2px}
+.dr-acts a{color:var(--ink-3)}
+.dr-kind{font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;padding:2px 8px;border-radius:4px;background:var(--plat-soft);color:var(--ink)}
+.dr-more{display:flex;justify-content:center;padding:18px 0}
+.dr-empty{padding:36px 0;text-align:center;color:var(--ink-3)}
+.dr-about{margin-top:28px;font-size:13.5px;color:var(--ink-2);max-width:75ch}
+.dr-about summary{cursor:pointer;font-weight:600;color:var(--ink)}
+.dr-about p,.dr-about ul{margin:8px 0}
+.dr-about a{color:var(--amber)}
+.dr-hit{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 16px;align-items:center;background:var(--surface-2);border-radius:10px;padding:10px 12px}
+.dr-hit .nm{font-family:var(--display);font-size:18px;line-height:1.2}
+.dr-hit .facts{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13.5px;color:var(--ink-2);margin-top:2px}
+.dr-hit .facts b{font-family:var(--mono);font-weight:500;color:var(--ink)}
+mark{background:var(--amber-soft);color:inherit;border-radius:2px;padding:0 1px}
+@media (max-width:480px){.dr-row{grid-template-columns:1fr}.dr-stat{text-align:left;display:flex;gap:12px;align-items:baseline}.dr-stat .abv{display:inline}.dr-hit{grid-template-columns:1fr}}
 footer{color:var(--ink-3);font-size:13px;padding-block:0 40px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -242,12 +317,13 @@ footer{color:var(--ink-3);font-size:13px;padding-block:0 40px}
 <header class="wrap">
   <div class="eyebrow">Scotch · Japanese · Australian <span class="offline" id="offline" hidden>· Offline</span></div>
   <h1>Whisky Ratings Finder</h1>
-  <p class="lede">Look up any bottle across critics, competitions, community scores and retailers, by name or from a photo of the label. Keep your own tasting notes alongside.</p>
+  <p class="lede">Look up any bottle across critics, competitions, community scores and retailers, by name or from a photo of the label. Browse about 650 bottles in Dram Finder with their scores, medals and prices, and keep your own tasting notes alongside.</p>
 </header>
 
 <nav class="tabs" aria-label="Sections">
   <div class="wrap" role="tablist">
     <button class="tab" role="tab" id="tab-find" aria-controls="p-find" aria-selected="true" type="button">Find ratings</button>
+    <button class="tab" role="tab" id="tab-dram" aria-controls="p-dram" aria-selected="false" type="button">Dram Finder<span id="dramCount"></span></button>
     <button class="tab" role="tab" id="tab-log" aria-controls="p-log" aria-selected="false" type="button">My tastings<span id="logCount"></span></button>
     <button class="tab" role="tab" id="tab-scales" aria-controls="p-scales" aria-selected="false" type="button">Rating scales</button>
   </div>
@@ -272,6 +348,7 @@ footer{color:var(--ink-3);font-size:13px;padding-block:0 40px}
       <datalist id="dlist"></datalist>
       <div class="match" id="match" hidden></div>
       <div class="mine-note" id="mineNote" hidden></div>
+      <div class="dr-hit" id="dramHit" hidden></div>
 
       <div class="photo" id="photoPanel" hidden>
         <img id="photoImg" alt="Your bottle photo">
@@ -312,6 +389,72 @@ footer{color:var(--ink-3);font-size:13px;padding-block:0 40px}
     <div id="cats"></div>
   </section>
 
+  <!-- ====================== DRAM FINDER ====================== -->
+  <section id="p-dram" role="tabpanel" aria-labelledby="tab-dram" hidden>
+    <div class="dr-views chips" role="group" aria-label="Show">
+      <button class="chip" type="button" data-dview="whiskies" aria-pressed="true">Whiskies</button>
+      <button class="chip" type="button" data-dview="suppliers" aria-pressed="false">Bottlers &amp; shops</button>
+    </div>
+
+    <div id="dWhiskies">
+      <label class="f dr-search">Search bottles, distilleries, towns or awards
+        <input id="dq" type="search" placeholder="Try Islay, Lagavulin, Tasmania, rye or World's Best" autocomplete="off" enterkeyhint="search">
+      </label>
+      <details class="dr-fwrap" id="dFilters" open>
+      <summary>Filters <span id="dActive"></span></summary>
+      <div class="dr-filters">
+        <div class="dr-rail wide"><span class="dr-lbl">Country</span><div class="chips" id="df-country"></div></div>
+        <div class="dr-rail wide"><span class="dr-lbl">Region</span><div class="chips" id="df-region"></div></div>
+        <div class="dr-rail"><span class="dr-lbl">Type</span><div class="chips" id="df-type"></div></div>
+        <div class="dr-rail"><span class="dr-lbl">Peat</span><div class="chips" id="df-peat"></div></div>
+        <div class="dr-rail wide"><span class="dr-lbl">Awards, ratings &amp; price</span><div class="chips" id="df-award"></div></div>
+        <div class="dr-rail wide"><span class="dr-lbl">Competition</span><div class="chips" id="df-comp"></div></div>
+      </div>
+      </details>
+      <div class="dr-bar">
+        <span class="dr-count" id="dCount"></span>
+        <div class="dr-tools">
+          <button class="linkbtn" id="dReset" type="button" hidden>Clear all</button>
+          <select id="dSort" aria-label="Sort bottles">
+            <option value="name">Name A–Z</option>
+            <option value="critic">Critic score</option>
+            <option value="community">Community rating</option>
+            <option value="medals">Most medals</option>
+            <option value="price">Cheapest (AUD)</option>
+            <option value="abv-d">Strongest first</option>
+            <option value="abv-a">Lightest first</option>
+            <option value="peat">Smokiest first</option>
+            <option value="country">Country</option>
+          </select>
+        </div>
+      </div>
+      <ul class="dr-list" id="dList"></ul>
+      <div class="dr-more" id="dMoreWrap" hidden><button class="btn" id="dMore" type="button">Show more</button></div>
+    </div>
+
+    <div id="dSuppliers" hidden>
+      <label class="f dr-search">Search bottlers, distributors and shops
+        <input id="dsq" type="search" placeholder="e.g. Tasmania, independent bottler, ships Australia-wide" autocomplete="off">
+      </label>
+      <div class="dr-filters">
+        <div class="dr-rail"><span class="dr-lbl">Kind</span><div class="chips" id="ds-kind"></div></div>
+        <div class="dr-rail"><span class="dr-lbl">Based in</span><div class="chips" id="ds-country"></div></div>
+      </div>
+      <div class="dr-bar"><span class="dr-count" id="dsCount"></span></div>
+      <ul class="dr-list" id="dsList"></ul>
+    </div>
+
+    <details class="dr-about">
+      <summary>About these ratings, medals and prices</summary>
+      <p><b>Critic score</b> is the expert tasting score out of 100 published on Distiller, with the reviewer named. <b>Community</b> is Distiller's average user rating out of 5, with the number of ratings. Bottles not listed on Distiller show no scores.</p>
+      <p><b>Medals</b> come from the major whisky competitions, including SFWSC, IWSC, ISC, the World Whiskies Awards, the Australian Distilled Spirits and International Spirits Awards, TWSC, the Irish, Canadian and New Zealand awards, the Spirits Business Masters and Meininger's ISW. Each medal links to the results page it came from. Not every competition publishes a searchable list of ordinary Gold, Silver and Bronze results, so "No medals found" means none were found in these sources, not that the bottle has never won.</p>
+      <p><b>Where to buy</b> lists prices read from retailer websites on the date shown. Prices and stock change often, so confirm on the shop's site before buying.</p>
+      <p id="dSnap"></p>
+      <p><b>Medal sources</b></p>
+      <ul id="dSources"></ul>
+    </details>
+  </section>
+
   <!-- ====================== TASTINGS ====================== -->
   <section id="p-log" role="tabpanel" aria-labelledby="tab-log" hidden>
     <div class="stats" id="stats"></div>
@@ -343,7 +486,7 @@ footer{color:var(--ink-3);font-size:13px;padding-block:0 40px}
   </section>
 </main>
 
-<footer class="wrap">Searches open each source in a new tab; nothing you type leaves this device otherwise. Ratings belong to their publishers and change over time, so check the source before you buy.</footer>
+<footer class="wrap">Searches open each source in a new tab; nothing you type leaves this device otherwise. Ratings and prices belong to their publishers and change over time, so check the source before you buy.</footer>
 
 <!-- tasting editor -->
 <div class="back" id="eBack" hidden></div>
@@ -445,6 +588,7 @@ footer{color:var(--ink-3);font-size:13px;padding-block:0 40px}
 </div>
 
 <script src="distilleries.js"></script>
+<script src="dram-data.js"></script>
 <script>
 /* =====================================================================
    RATING SOURCES
@@ -615,6 +759,7 @@ function renderFind(){
   const d = q ? distilleryFor(q) : null;
   $('match').hidden = !d;
   if (d) $('match').innerHTML = `<b>${esc(d.name)}</b><span class="cty ${d.cty}">${CTYNAME[d.cty]}</span><span>${esc(d.region)}</span>`;
+  renderDramHit(q);
   const mine = q ? tastings.filter(t => norm(t.name) === norm(q) || (norm(t.name).includes(norm(q)) && norm(q).length > 5)) : [];
   $('mineNote').hidden = !mine.length;
   if (mine.length){
@@ -634,7 +779,7 @@ $('sform').addEventListener('submit', e => {
 $('mineNote').addEventListener('click', e => { const b = e.target.closest('[data-edit]'); if (b) openEditor(tastings.find(t => t.id === b.dataset.edit)); });
 function remember(q){ const r = store.get('wf-recent', []).filter(x => x !== q); r.unshift(q); store.set('wf-recent', r.slice(0, 12)); fillList(); }
 function fillList(){
-  const names = new Set([...store.get('wf-recent', []), ...tastings.map(t => t.name), ...DIST.map(d => d.name)]);
+  const names = new Set([...store.get('wf-recent', []), ...tastings.map(t => t.name), ...BOTTLES.map(w => w.name), ...DIST.map(d => d.name)]);
   $('dlist').innerHTML = [...names].map(n => `<option value="${esc(n)}"></option>`).join('');
 }
 
@@ -763,6 +908,7 @@ async function delT(id){ if (db) await tx('readwrite', st => st.delete(id)); els
 const fmtDate = d => { try { return new Date(d + 'T00:00:00').toLocaleDateString('en-AU', {day:'numeric', month:'short', year:'numeric'}); } catch(e){ return d; } };
 const BOTTLE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M10 2h4v4l1.5 2.5V20a2 2 0 0 1-2 2h-3a2 2 0 0 1-2-2V8.5L10 6z"/><path d="M8.5 13h7"/></svg>';
 function renderLog(){
+  if (!$('p-dram').hidden) renderDram();
   $('logCount').textContent = tastings.length ? ' ' + tastings.length : '';
   const n = tastings.length, avg = n ? tastings.reduce((a, t) => a + (+t.score || 0), 0) / n : 0;
   const top = [...tastings].sort((a, b) => b.score - a.score)[0];
@@ -795,6 +941,13 @@ const F = ['Name','Dist','Cty','Age','Abv','Region','Cask','Nose','Palate','Fini
 function setScore(v){ v = Math.max(50, Math.min(100, Math.round(+v || 50))); $('eScore').value = v; $('eScoreR').value = v; const b = bandOf(v); $('eBand').textContent = `${b[1]}: ${b[2].toLowerCase()}`; }
 function setPhoto(src){ ePhoto = src || ''; $('eThumb').outerHTML = ePhoto ? `<img class="thumb" id="eThumb" src="${esc(ePhoto)}" alt="Bottle photo">` : `<div class="thumb" id="eThumb">${BOTTLE}</div>`; $('ePhotoDel').hidden = !ePhoto; $('ePhotoBtn').textContent = ePhoto ? 'Change photo' : 'Add bottle photo'; }
 function fillFromName(force){
+  const w = dramMatch($('eName').value);
+  if (w && w.n === norm($('eName').value)){
+    /* a Dram Finder bottle: fill what it knows, keep anything already typed */
+    const set = (id, v) => { if (v != null && v !== '' && (force || !$(id).value)) $(id).value = v; };
+    set('eDist', w.distillery); set('eRegion', w.region); set('eAge', w.age); set('eAbv', w.abv);
+    $('eCty').value = CTYCODE[w.country] || 'other'; return;
+  }
   const d = distilleryFor($('eName').value); if (!d) return;
   if (force || !$('eDist').value) $('eDist').value = d.name;
   if (force || !$('eRegion').value) $('eRegion').value = d.region;
@@ -936,10 +1089,218 @@ $('bands').innerHTML = BANDS.map((b, i) => {
   return `<div class="band"><b>${range}</b> <strong>${esc(b[1])}</strong><span>${esc(b[2])}</span></div>`;
 }).join('');
 
+/* =====================================================================
+   DRAM FINDER: about 650 bottles with critic and community scores,
+   competition medals, retailer prices and a bottler/shop directory.
+   Data lives in dram-data.js (a snapshot of the Dram Finder artifact).
+   ===================================================================== */
+const DRAM = window.DRAM || {core:[], added:[], awards:{}, prices:{}, suppliers:[], SRC:{}, LEVEL:{}, COMP:{}};
+const D_RANK = {T:5, P:4, DG:3, M:3, GG:3, G:2, S:1, B:.5};
+const PEAT = ['Unpeated','Lightly peated','Medium peat','Heavily peated'];
+const CTYCODE = {Scotland:'SC', Japan:'JP', Australia:'AU'};
+const safeUrl = u => typeof u === 'string' && /^https:\/\/[^\s"'<>]+$/.test(u) ? u : '';
+const keyOf = s => String(s).toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 120) || 'x';
+function mkBottle(r, i, origin){
+  const [name, distillery, town, country, type, abv, age, peat, notes, d, m, region, bottler, srcUrl, key] = r;
+  const w = {id:origin + i, origin, name, distillery, town, country, type, abv, age, peat:peat || 0, notes, region:region || '', bottler:bottler || '', srcUrl:safeUrl(srcUrl), key:key || keyOf(name),
+    d: d ? {slug:d[0], expert:d[1], reviewer:d[2], comm:d[3], n:d[4]} : null};
+  const seen = new Set(), codes = [];
+  for (const c of [...(m || []), ...(DRAM.awards[w.key] || [])]){
+    const p = c.split('-'), k = p.slice(0, 4).join('-');
+    if (p.length < 4 || seen.has(k) || !DRAM.SRC[p[3]] || !DRAM.COMP[p[0]] || !DRAM.LEVEL[p[2]]) continue;
+    seen.add(k); codes.push(c);
+  }
+  w.medals = codes.map(c => { const [comp, year, lvl, src, ...note] = c.split('-'); return {comp, year:+year, lvl, src, note:note.join('-')}; }).sort((a, b) => b.year - a.year || (D_RANK[b.lvl] || 0) - (D_RANK[a.lvl] || 0));
+  w.best = w.medals.reduce((a, x) => Math.max(a, D_RANK[x.lvl] || 0), 0);
+  w.comps = [...new Set(w.medals.map(x => DRAM.COMP[x.comp]))];
+  const pr = DRAM.prices[w.key];
+  w.offers = pr ? pr[1].map(([store, price, currency, size, url]) => ({store, price, currency, size, url})) : [];
+  w.checked = pr ? pr[0] : '';
+  w.aud = Math.min(Infinity, ...w.offers.filter(o => o.currency === 'AUD').map(o => o.price));
+  w.n = norm(name);
+  w.hay = ' ' + norm([name, distillery, town, region, country, type, notes, bottler, ...w.medals.map(x => [DRAM.COMP[x.comp], DRAM.LEVEL[x.lvl], x.note, DRAM.SRC[x.src][0]].join(' '))].join(' ')) + ' ';
+  return w;
+}
+const BOTTLES = [...DRAM.core.map((r, i) => mkBottle(r, i, 'c')), ...DRAM.added.map((r, i) => mkBottle(r, i, 'r'))];
+const SUPPLIERS = DRAM.suppliers.map(([name, kind, country, city, about, ships, url]) => ({name, kind, country, city, about, ships, url:safeUrl(url), hay:norm([name, kind, country, city, about, ships].join(' '))}));
+const tastedOf = w => tastings.filter(t => norm(t.name) === w.n).sort((a, b) => (b.date || '').localeCompare(a.date || ''))[0];
+
+/* best Dram Finder bottle for a typed or photographed name */
+function dramMatch(q){
+  const n = norm(q); if (n.length < 3) return null;
+  const exact = BOTTLES.find(w => w.n === n); if (exact) return exact;
+  let best = null;
+  BOTTLES.forEach(w => {
+    const inQ = (' ' + n + ' ').includes(' ' + w.n + ' '), qIn = w.hay.includes(' ' + n + ' ') && w.n.startsWith(n.split(' ')[0]);
+    const sc = inQ ? 2 + w.n.length / 100 : qIn && n.length >= 5 ? 1 - w.n.length / 1000 : 0;
+    if (sc && (!best || sc > best.sc)) best = {w, sc};
+  });
+  return best ? best.w : null;
+}
+const dstate = {q:'', country:new Set(), region:new Set(), type:new Set(), peat:new Set(), award:new Set(), comp:new Set(), sort:store.get('wf-dsort', 'name'), limit:30, more:new Set(),
+  view:'whiskies', sq:'', kind:new Set(), scountry:new Set(), rendered:false};
+const D_AWARDS = {
+  any:{label:'Any medal', test:w => w.medals.length > 0},
+  dg:{label:'Double Gold or better', test:w => w.best >= 3},
+  trophy:{label:'Trophy / Best in class', test:w => w.medals.some(m => m.lvl === 'T')},
+  plat:{label:'Platinum', test:w => w.medals.some(m => m.lvl === 'P')},
+  c90:{label:'Critic 90+', test:w => w.d && w.d.expert >= 90},
+  u4:{label:'Community 4.0+', test:w => w.d && w.d.comm >= 4},
+  buy:{label:'Has Australian price', test:w => w.aud < Infinity},
+  mine:{label:'In my tastings', test:w => !!tastedOf(w)}
+};
+const D_KEYS = ['country','region','type','peat','award','comp'];
+function dMatches(w, skip){
+  const terms = norm(dstate.q).split(' ').filter(Boolean);
+  if (!terms.every(t => w.hay.includes(t))) return false;
+  for (const k of ['country','region','type','peat']) if (k !== skip && dstate[k].size && !dstate[k].has(w[k])) return false;
+  if (skip !== 'award') for (const a of dstate.award) if (!D_AWARDS[a].test(w)) return false;
+  if (skip !== 'comp' && dstate.comp.size && !w.comps.some(c => dstate.comp.has(c))) return false;
+  return true;
+}
+const byName = (a, b) => a.name.localeCompare(b.name);
+const D_SORT = {
+  name:byName,
+  critic:(a, b) => ((b.d && b.d.expert) || 0) - ((a.d && a.d.expert) || 0) || byName(a, b),
+  community:(a, b) => ((b.d && b.d.comm) || 0) - ((a.d && a.d.comm) || 0) || byName(a, b),
+  medals:(a, b) => b.best - a.best || b.medals.length - a.medals.length || byName(a, b),
+  price:(a, b) => a.aud - b.aud || byName(a, b),
+  'abv-d':(a, b) => (b.abv || 0) - (a.abv || 0) || byName(a, b),
+  'abv-a':(a, b) => (a.abv || 99) - (b.abv || 99) || byName(a, b),
+  peat:(a, b) => b.peat - a.peat || byName(a, b),
+  country:(a, b) => a.country.localeCompare(b.country) || byName(a, b)
+};
+const tally = (arr, f) => { const m = new Map(); arr.forEach(x => { const v = f(x); (Array.isArray(v) ? v : [v]).forEach(y => { if (y !== '' && y != null) m.set(y, (m.get(y) || 0) + 1); }); }); return [...m.keys()].sort((a, b) => m.get(b) - m.get(a) || String(a).localeCompare(String(b))); };
+const CAP = 10;
+/* chip rail: values, live counts, selected state, and a "more" toggle on long rails */
+function dRail(el, key, values, label, count, cap){
+  const set = dstate[key] || dstate[key.replace(/^s/, '')];
+  values = values.slice(); set.forEach(v => { if (!values.includes(v)) values.push(v); });
+  const open = !cap || dstate.more.has(key) || values.length <= cap + 2;
+  const shown = open ? values : values.filter((v, i) => i < cap || set.has(v));
+  el.innerHTML = shown.map(v => { const n = count(v); return `<button class="chip" type="button" data-dk="${key}" data-dv="${esc(v)}" aria-pressed="${set.has(v)}"${n || set.has(v) ? '' : ' style="opacity:.45"'}>${esc(label ? label(v) : v)}<span class="dr-n">${n}</span></button>`; }).join('') +
+    (values.length > shown.length ? `<button class="chip more" type="button" data-dmore="${key}">+ ${values.length - shown.length} more</button>` : open && cap && values.length > cap + 2 ? `<button class="chip more" type="button" data-dmore="${key}">Fewer</button>` : '');
+}
+function dhl(text){
+  text = String(text == null ? '' : text);
+  const terms = dstate.q.trim().split(/\s+/).filter(t => t.length > 1).map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  if (!terms.length) return esc(text);
+  return text.split(new RegExp('(' + terms.join('|') + ')', 'gi')).map((p, i) => i % 2 ? `<mark>${esc(p)}</mark>` : esc(p)).join('');
+}
+const money = (p, c) => { try { return new Intl.NumberFormat('en-AU', {style:'currency', currency:c, maximumFractionDigits:2}).format(p); } catch(e){ return c + ' ' + p; } };
+const stars = v => `<span class="dr-stars" aria-hidden="true">★★★★★<span style="width:${Math.max(0, Math.min(100, v / 5 * 100))}%">★★★★★</span></span>`;
+function dRow(w){
+  const url = w.d && w.d.slug ? `https://distiller.com/spirits/${encodeURIComponent(w.d.slug)}` : '';
+  const critic = w.d && w.d.expert != null ? `<span class="dr-v"><b>${w.d.expert}</b><small>/100</small> <small>· ${url ? `<a href="${url}" target="_blank" rel="noopener">${esc(w.d.reviewer)}, Distiller</a>` : esc(w.d.reviewer)}</small></span>`
+    : `<span class="dr-none">${w.d ? 'No expert review on Distiller' : 'Not listed on Distiller'}</span>`;
+  const comm = w.d && w.d.comm != null ? `<span class="dr-v">${stars(w.d.comm)} <b style="font-size:15px">${w.d.comm.toFixed(2)}</b> <small>· ${(w.d.n || 0).toLocaleString('en-AU')} ratings</small></span>` : `<span class="dr-none">Not listed on Distiller</span>`;
+  const med = w.medals.length ? `<span class="dr-medals">${w.medals.map(m => { const s = DRAM.SRC[m.src], u = safeUrl(s[1]), t = `${esc(DRAM.COMP[m.comp])} ${m.year} · ${esc(DRAM.LEVEL[m.lvl])}${m.note ? ' (' + esc(m.note) + ')' : ''}`;
+    return u ? `<a class="dr-medal ${m.lvl}" href="${u}" target="_blank" rel="noopener" title="${esc(s[0])}">${t}</a>` : `<span class="dr-medal ${m.lvl}" title="${esc(s[0])}">${t}</span>`; }).join('')}</span>` : `<span class="dr-none">No medals found in covered sources</span>`;
+  const offers = w.offers.length ? w.offers.slice().sort((a, b) => a.currency === b.currency ? a.price - b.price : a.currency === 'AUD' ? -1 : b.currency === 'AUD' ? 1 : 0).map(o => { const u = safeUrl(o.url), nm = esc(o.store) + (o.size ? ` <small class="hint">· ${esc(o.size)}</small>` : '');
+    return `<span class="dr-offer">${u ? `<a href="${u}" target="_blank" rel="noopener">${nm}</a>` : `<span>${nm}</span>`}<span class="p">${money(o.price, o.currency)}</span></span>`; }).join('') + (w.checked ? `<small class="hint">Checked ${esc(w.checked)}. Confirm on the shop's site.</small>` : '') : `<span class="dr-none">No prices collected yet</span>`;
+  const t = tastedOf(w);
+  return `<li class="dr-row">
+    <div style="min-width:0"><h3>${dhl(w.name)}</h3>
+      <p class="dr-where"><strong>${dhl(w.distillery)}</strong>${w.bottler ? ' · bottled by ' + dhl(w.bottler) : ''}${w.town ? ' · ' + dhl(w.town) + ',' : ' ·'} ${dhl(w.region)}${w.region && w.country ? ', ' : ''}${dhl(w.country)}</p></div>
+    <div class="dr-stat"><span class="abv">${w.abv != null ? w.abv.toFixed(1) + '%' : '—'}</span>${w.age ? w.age + ' yrs' : 'NAS'}
+      <span class="dr-peat" title="${PEAT[w.peat]}" aria-label="${PEAT[w.peat]}">${[1,2,3].map(i => `<i class="${i <= w.peat ? 'on' : ''}"></i>`).join('')}</span></div>
+    ${w.notes ? `<p class="dr-notes">${dhl(w.notes)}</p>` : ''}
+    <div class="dr-tags">${w.type ? `<span class="dr-tag">${esc(w.type)}</span>` : ''}<span class="dr-tag">${PEAT[w.peat]}</span>${t ? `<span class="dr-tag mine">My score ${t.score}</span>` : ''}</div>
+    <div class="dr-ratings">
+      <div class="dr-r"><span class="dr-k">Critic score</span>${critic}</div>
+      <div class="dr-r"><span class="dr-k">Community</span>${comm}</div>
+      <div class="dr-r full"><span class="dr-k">Medals</span>${med}</div>
+      <div class="dr-r full"><span class="dr-k">Where to buy</span><span style="display:grid">${offers}</span></div>
+    </div>
+    <div class="dr-acts"><button class="linkbtn" type="button" data-dsearch="${esc(w.id)}">Search every source</button>${t ? `<button class="linkbtn" type="button" data-edit="${esc(t.id)}">See my notes</button>` : ''}<button class="linkbtn" type="button" data-dlog="${esc(w.id)}">Add tasting</button>${w.srcUrl ? `<a href="${w.srcUrl}" target="_blank" rel="noopener">Source</a>` : ''}</div>
+  </li>`;
+}
+function renderDram(){
+  dstate.rendered = true;
+  const W = BOTTLES;
+  dRail($('df-country'), 'country', tally(W, w => w.country), null, v => W.filter(w => w.country === v && dMatches(w, 'country')).length, CAP);
+  const pool = dstate.country.size ? W.filter(w => dstate.country.has(w.country)) : W;
+  dRail($('df-region'), 'region', tally(pool, w => w.region), null, v => W.filter(w => w.region === v && dMatches(w, 'region')).length, dstate.country.size ? 0 : CAP);
+  dRail($('df-type'), 'type', tally(W, w => w.type), null, v => W.filter(w => w.type === v && dMatches(w, 'type')).length, 8);
+  dRail($('df-peat'), 'peat', [0,1,2,3], v => PEAT[v], v => W.filter(w => w.peat === v && dMatches(w, 'peat')).length, 0);
+  dRail($('df-award'), 'award', Object.keys(D_AWARDS), v => D_AWARDS[v].label, v => W.filter(w => D_AWARDS[v].test(w) && dMatches(w, 'award')).length, 0);
+  dRail($('df-comp'), 'comp', tally(W, w => w.comps), null, v => W.filter(w => w.comps.includes(v) && dMatches(w, 'comp')).length, CAP);
+  const res = W.filter(w => dMatches(w)).sort(D_SORT[dstate.sort] || byName);
+  $('dCount').innerHTML = `<b>${res.length}</b> of ${W.length} bottles`;
+  $('dReset').hidden = !(dstate.q || D_KEYS.some(k => dstate[k].size));
+  const active = D_KEYS.reduce((a, k) => a + dstate[k].size, 0); $('dActive').textContent = active ? active + ' on' : '';
+  $('dSort').value = dstate.sort;
+  $('dList').innerHTML = res.length ? res.slice(0, dstate.limit).map(dRow).join('') : `<li class="dr-empty">No bottles match. Try a broader word or clear a filter. Search every source on Find ratings for anything not listed here.</li>`;
+  $('dMoreWrap').hidden = res.length <= dstate.limit;
+  $('dMore').textContent = `Show ${Math.min(30, res.length - dstate.limit)} more (${res.length - dstate.limit} left)`;
+}
+function sMatchesD(s, skip){
+  const terms = norm(dstate.sq).split(' ').filter(Boolean);
+  if (!terms.every(t => s.hay.includes(t))) return false;
+  if (skip !== 'skind' && dstate.kind.size && !dstate.kind.has(s.kind)) return false;
+  if (skip !== 'scountry' && dstate.scountry.size && !dstate.scountry.has(s.country)) return false;
+  return true;
+}
+function renderSuppliers(){
+  dRail($('ds-kind'), 'skind', tally(SUPPLIERS, s => s.kind), null, v => SUPPLIERS.filter(s => s.kind === v && sMatchesD(s, 'skind')).length, 0);
+  dRail($('ds-country'), 'scountry', tally(SUPPLIERS, s => s.country), null, v => SUPPLIERS.filter(s => s.country === v && sMatchesD(s, 'scountry')).length, 0);
+  const res = SUPPLIERS.filter(s => sMatchesD(s)).sort((a, b) => a.kind.localeCompare(b.kind) || a.name.localeCompare(b.name));
+  $('dsCount').innerHTML = `<b>${res.length}</b> of ${SUPPLIERS.length} bottlers and shops`;
+  $('dsList').innerHTML = res.length ? res.map(s => `<li class="dr-row"><div style="min-width:0"><h3>${s.url ? `<a href="${s.url}" target="_blank" rel="noopener">${esc(s.name)}</a>` : esc(s.name)}</h3><p class="dr-where"><strong>${esc(s.city)}</strong>${s.city ? ', ' : ''}${esc(s.country)}</p></div>
+    <div class="dr-stat"><span class="dr-kind">${esc(s.kind)}</span></div><p class="dr-notes">${esc(s.about)}</p>${s.ships ? `<div class="dr-tags"><span class="dr-tag">${esc(s.ships)}</span></div>` : ''}</li>`).join('') : `<li class="dr-empty">No bottlers or shops match that search.</li>`;
+}
+function setDView(v){
+  dstate.view = v;
+  document.querySelectorAll('[data-dview]').forEach(b => b.setAttribute('aria-pressed', b.dataset.dview === v));
+  $('dWhiskies').hidden = v !== 'whiskies'; $('dSuppliers').hidden = v !== 'suppliers';
+  v === 'suppliers' ? renderSuppliers() : renderDram();
+}
+/* open Dram Finder on one bottle (from the Find card) */
+function showInDram(w){ dstate.q = w.name; $('dq').value = w.name; D_KEYS.forEach(k => dstate[k].clear()); dstate.limit = 30; selectTab('dram'); setDView('whiskies'); window.scrollTo({top:0, behavior:'smooth'}); }
+function renderDramHit(q){
+  const w = q ? dramMatch(q) : null;
+  $('dramHit').hidden = !w; if (!w) return;
+  const best = w.medals.slice().sort((a, b) => (D_RANK[b.lvl] || 0) - (D_RANK[a.lvl] || 0) || b.year - a.year)[0];
+  const facts = [w.d && w.d.expert != null ? `Critic <b>${w.d.expert}</b>/100` : '', w.d && w.d.comm != null ? `Community <b>${w.d.comm.toFixed(2)}</b>/5` : '',
+    best ? `<b>${esc(DRAM.LEVEL[best.lvl])}</b> ${esc(DRAM.COMP[best.comp])} ${best.year}${w.medals.length > 1 ? ` +${w.medals.length - 1}` : ''}` : '', w.aud < Infinity ? `From <b>${money(w.aud, 'AUD')}</b>` : ''].filter(Boolean);
+  $('dramHit').innerHTML = `<div style="min-width:0"><div class="eyebrow">In Dram Finder</div><div class="nm">${esc(w.name)}</div><div class="facts">${facts.length ? facts.map(f => `<span>${f}</span>`).join('') : '<span>Scores not collected yet</span>'}</div></div><button class="btn small" type="button" data-dshow="${esc(w.id)}">Scores, medals &amp; prices</button>`;
+}
+$('dramHit').addEventListener('click', e => { const b = e.target.closest('[data-dshow]'); if (b) showInDram(BOTTLES.find(w => w.id === b.dataset.dshow)); });
+$('dq').addEventListener('input', e => { dstate.q = e.target.value; dstate.limit = 30; renderDram(); });
+$('dsq').addEventListener('input', e => { dstate.sq = e.target.value; renderSuppliers(); });
+$('dSort').addEventListener('change', e => { dstate.sort = e.target.value; store.set('wf-dsort', dstate.sort); dstate.limit = 30; renderDram(); });
+$('dReset').addEventListener('click', () => { dstate.q = ''; $('dq').value = ''; D_KEYS.forEach(k => dstate[k].clear()); dstate.limit = 30; renderDram(); });
+$('dMore').addEventListener('click', () => { dstate.limit += 30; renderDram(); });
+$('p-dram').addEventListener('click', e => {
+  const v = e.target.closest('[data-dview]'); if (v) return setDView(v.dataset.dview);
+  const m = e.target.closest('[data-dmore]'); if (m){ const k = m.dataset.dmore; dstate.more.has(k) ? dstate.more.delete(k) : dstate.more.add(k); return k === 'skind' || k === 'scountry' ? renderSuppliers() : renderDram(); }
+  const c = e.target.closest('[data-dk]');
+  if (c){
+    const k = c.dataset.dk, set = dstate[k] || dstate[k.replace(/^s/, '')], val = k === 'peat' ? +c.dataset.dv : c.dataset.dv;
+    set.has(val) ? set.delete(val) : set.add(val);
+    if (k === 'country') [...dstate.region].forEach(r => { if (dstate.country.size && !BOTTLES.some(w => w.region === r && dstate.country.has(w.country))) dstate.region.delete(r); });
+    dstate.limit = 30; return k === 'skind' || k === 'scountry' ? renderSuppliers() : renderDram();
+  }
+  const s = e.target.closest('[data-dsearch]');
+  if (s){ const w = BOTTLES.find(x => x.id === s.dataset.dsearch); $('q').value = w.name; remember(w.name); selectTab('find'); renderFind(); window.scrollTo({top:0, behavior:'smooth'}); toast('Every source now searches for ' + w.name + '.'); return; }
+  const l = e.target.closest('[data-dlog]');
+  if (l){ openEditor(null, {name:BOTTLES.find(x => x.id === l.dataset.dlog).name}); return; }
+  const ed = e.target.closest('[data-edit]'); if (ed) openEditor(tastings.find(x => x.id === ed.dataset.edit));
+});
+/* filters start folded on phones so the bottles are in view; always open on wider screens */
+const wide = matchMedia('(min-width:761px)');
+const syncFold = () => { $('dFilters').open = wide.matches; }; syncFold();
+try { wide.addEventListener('change', syncFold); } catch(e){ wide.addListener && wide.addListener(syncFold); }
+$('dCount').innerHTML = ''; $('dramCount').textContent = BOTTLES.length ? ' ' + BOTTLES.length : '';
+$('dSnap').textContent = DRAM.snapshot ? `Scores, medals and prices as collected up to ${fmtDate(DRAM.snapshot)}.` : '';
+$('dSources').innerHTML = Object.values(DRAM.SRC).map(([t, u]) => { const s = safeUrl(u); return `<li>${s ? `<a href="${s}" target="_blank" rel="noopener">${esc(t)}</a>` : esc(t)}</li>`; }).join('') + '<li><a href="https://distiller.com" target="_blank" rel="noopener">Distiller</a>: critic and community scores, linked on each bottle</li>';
+
 /* ---------- tabs ---------- */
 function selectTab(id){
-  ['find','log','scales'].forEach(t => { const on = t === id; $('tab-' + t).setAttribute('aria-selected', on); $('p-' + t).hidden = !on; });
+  if (!$('tab-' + id)) id = 'find';
+  ['find','dram','log','scales'].forEach(t => { const on = t === id; $('tab-' + t).setAttribute('aria-selected', on); $('p-' + t).hidden = !on; });
   store.set('wf-tab', id);
+  if (id === 'dram') dstate.view === 'suppliers' ? renderSuppliers() : renderDram();
 }
 document.querySelector('.tabs').addEventListener('click', e => { const b = e.target.closest('.tab'); if (b) selectTab(b.id.slice(4)); });
 
